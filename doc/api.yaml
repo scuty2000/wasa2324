@@ -38,7 +38,79 @@ paths:
                 type: object
                 properties:
                   identifier:
-                    # change here if you decide to use an integer
-                    # or any other type of identifier
-                    type: string
-                    example: "abcdef012345"
+                    type: integer
+                    minimum: 0
+                    example: 123
+  /stream/{userID}:
+    parameters:
+    - name: userID
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags: ["data retrieval"]
+      summary: Returns the user stream
+      description: |
+        Given a user identifier a stream of photos (images)
+        is returned in the response. If the requested userID
+        does not exist, an error will be given
+      operationId: getMyStream
+      responses:
+        "200":
+          description: The user is found and the stream is the content.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: TODO - WTF SHOULD THIS BE?
+        "404":
+          description: The user identifier is not valid.
+  /user/{userID}:
+    parameters:
+    - name: userID
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags: ["data retrieval"]
+      summary: Get user profile
+      description: |
+        Given a user identifier, the user profile
+        is returned. If the user is not found, an
+        error will be returned.
+      operationId: getUserProfile
+      responses:
+        "200":
+          description: The user is found and the profile is in the content.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: TODO - CREATE USER COMPONENT
+        "404":
+          description: The user identifier is not valid.
+    post:
+      tags: ["data manipulation"]
+      summary: Change user username
+      description: |
+        This can be used to modify the user username
+        for a given user identifier.
+      operationId: setMyUserName
+      requestBody:
+        description: New username
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: Maria.00
+        required: true
+      responses:
+        "200":
+          description: User username updated successfully.
+        "404":
+          description: The user identifier is not valid.
