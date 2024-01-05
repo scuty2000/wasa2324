@@ -23,11 +23,11 @@ components:
           { $ref: "#/components/schemas/UsersList" }
         following:
           { $ref: "#/components/schemas/UsersList" }
-        photosCount:
+        photos:
           readOnly: true
-          type: integer
-          example: 12
-          minimum: 0
+          type: array
+          items:
+            { $ref: "#/components/schemas/Photo" }
 
     Username:
       type: string
@@ -46,11 +46,48 @@ components:
       minimum: 0
       example: 123
 
+    ResourceID:
+      readOnly: true
+      type: integer
+      minimum: 0
+      example: 1234
+
+    PhotoComment:
+      type: object
+      properties:
+        id:
+          { $ref: "#/components/schemas/ResourceID" }
+        issuer:
+          { $ref: "#/components/schemas/Username" }
+        text:
+          type: string
+          minLength: 1
+          example: Nice photo bro!
+
     PhotoURL:
+      readOnly: true
       type: string
       pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
-      example: https://wasaphoto.lucascutigliani.it/uploads/1234
+      example: https://wasaphoto.lucascutigliani.it/uploads/1234.png
 
+    Photo:
+      type: object
+      properties:
+        id:
+          readOnly: true
+          type: integer
+          minimum: 0
+          example: 1234
+        url:
+          { $ref: "#/components/schemas/PhotoURL" }
+        likes:
+          type: array
+          items:
+            { $ref: "#/components/schemas/Username" }
+        comments:
+          type: array
+          items:
+            { $ref: "#/components/schemas/PhotoComment" }
 
   parameters:
     username:
@@ -210,7 +247,7 @@ paths:
       parameters:
         - { $ref: "#/components/parameters/paginationIndex" }
       tags: ["Stream"]
-      summary: Returns the user stream via a pagination counter
+      summary: Returns the photo stream via a pagination index
       description: |
         Given a user identifier a stream of photos (images)
         is returned in the response.
