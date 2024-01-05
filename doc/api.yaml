@@ -6,6 +6,12 @@ info:
     for the accademic year 23/24 by Scutigliani Luca (1914401)
   version: 0.0.2
 
+servers:
+  - url: wasaphoto.lucascutigliani.it
+    description: Production URL
+  - url: wasadev.lucascutigliani.it
+    description: Development URL
+
 components:
   schemas:
     User:
@@ -40,6 +46,12 @@ components:
       minimum: 0
       example: 123
 
+    PhotoURL:
+      type: string
+      pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
+      example: https://wasaphoto.lucascutigliani.it/uploads/1234
+
+
   parameters:
     username:
       name: username
@@ -53,6 +65,14 @@ components:
       required: true
       schema:
         { $ref: "#/components/schemas/UserID" }
+    paginationIndex:
+      name: paginationIndex
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        example: 2
 
 paths:
   /session:
@@ -183,20 +203,25 @@ paths:
         "404":
           description: The user identifier is not valid.
 
-  /users/{userID}/stream:
+  /users/{username}/stream:
     parameters:
-    - name: userID
-      in: path
-      required: true
-      schema:
-        type: string
+    - { $ref: "#/components/parameters/username" }
     get:
-      tags: ["Users"]
-      summary: Returns the user stream
+      parameters:
+        - { $ref: "#/components/parameters/paginationIndex" }
+      tags: ["Stream"]
+      summary: Returns the user stream via a pagination counter
       description: |
         Given a user identifier a stream of photos (images)
-        is returned in the response. If the requested userID
-        does not exist, an error will be given
+        is returned in the response.
+
+        Each response contains the 10 most recent photos.
+        To get more images, you must increment the
+        "paginationIndex" parameter by 1 and so on until
+        the give "paginationLimit".
+
+        If the requested userID does not exist, or the "paginationIndex"
+        is bigger than "paginationLimit" an error will be returned.
       operationId: getMyStream
       responses:
         "200":
@@ -204,7 +229,19 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: TODO - WTF SHOULD THIS BE?
+                type: object
+                properties:
+                  photo_urls:
+                    type: array
+                    items:
+                      { $ref: "#/components/schemas/PhotoURL" }
+                  paginationLimit:
+                    type: integer
+                    minimum: 0
+                    example: 4
+        "400":
+          description: |
+            The request is not valid. Check your syntax and that
+            paginationIndex is less or equal of paginationLimit
         "404":
-          description: The user identifier is not valid.
+          description: No user found for the required username.
