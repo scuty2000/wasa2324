@@ -52,6 +52,14 @@ components:
       minimum: 0
       example: 1234
 
+    PhotoLike:
+      type: object
+      properties:
+        id:
+          { $ref: "#/components/schemas/ResourceID" }
+        issuer:
+          { $ref: "#/components/schemas/Username" }
+
     PhotoComment:
       type: object
       properties:
@@ -80,14 +88,20 @@ components:
           example: 1234
         url:
           { $ref: "#/components/schemas/PhotoURL" }
-        likes:
-          type: array
-          items:
-            { $ref: "#/components/schemas/Username" }
-        comments:
-          type: array
-          items:
-            { $ref: "#/components/schemas/PhotoComment" }
+        date:
+          type: string
+          format: date-time
+        likesCount:
+          type: integer
+          minimum: 0
+          example: 42
+        commentsCount:
+          type: integer
+          minimum: 0
+          example: 42
+        liked:
+          type: boolean
+          example: false
 
   parameters:
     username:
@@ -237,8 +251,10 @@ paths:
                     { $ref: "#/components/schemas/Username" }
         "400":
           description: Bad request. Have you submitted all the required parameters?
+        "403":
+          description: You have no permission to execute this operation.
         "404":
-          description: The user identifier is not valid.
+          description: User not found.
 
   /users/{username}/stream:
     parameters:
@@ -268,10 +284,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  photo_urls:
+                  photos:
                     type: array
                     items:
-                      { $ref: "#/components/schemas/PhotoURL" }
+                      { $ref: "#/components/schemas/Photo" }
                   paginationLimit:
                     type: integer
                     minimum: 0
@@ -282,3 +298,43 @@ paths:
             paginationIndex is less or equal of paginationLimit
         "404":
           description: No user found for the required username.
+  /users/{username}/photos/:
+    parameters:
+      - { $ref: "#/components/parameters/username" }
+    post:
+      parameters:
+        - { $ref: "#/components/parameters/userID" }
+      tags: ["Photos"]
+      summary: Upload a photo
+      description: |
+        This endpoint is used to upload a photo.
+        You must encode the image in base64 format.
+
+        If an error occurs, a error is returned.
+      operationId: uploadPhoto
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "201":
+          description: Photo successfully uploaded, url in the content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    { $ref: "#/components/schemas/PhotoURL" }
+        "400":
+          description: "An error as occurred. Check image format."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The file is not an image.
