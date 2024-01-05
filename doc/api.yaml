@@ -4,11 +4,60 @@ info:
   description: |-
     This is the documentation for the APIs for the WASAPhoto Project,
     for the accademic year 23/24 by Scutigliani Luca (1914401)
-  version: 0.0.1
+  version: 0.0.2
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          { $ref: "#/components/schemas/Username" }
+        followers:
+          { $ref: "#/components/schemas/UsersList" }
+        following:
+          { $ref: "#/components/schemas/UsersList" }
+        photosCount:
+          readOnly: true
+          type: integer
+          example: 12
+          minimum: 0
+
+    Username:
+      type: string
+      example: maria00
+      maxLength: 32
+      minLength: 5
+
+    UsersList:
+      type: array
+      readOnly: true
+      items:
+        { $ref: "#/components/schemas/Username" }
+
+    UserID:
+      type: integer
+      minimum: 0
+      example: 123
+
+  parameters:
+    username:
+      name: username
+      in: path
+      required: true
+      schema:
+        { $ref: "#/components/schemas/Username" }
+    userID:
+      name: identifier
+      in: query
+      required: true
+      schema:
+        { $ref: "#/components/schemas/UserID" }
+
 paths:
   /session:
     post:
-      tags: ["login"]
+      tags: ["Login"]
       summary: Logs in the user
       description: |-
         If the user does not exist, it will be created,
@@ -25,56 +74,65 @@ paths:
                 name:
                   type: string
                   example: Maria
-                  pattern: 'ˆ.*?$'
+                  pattern: '^[a-zA-Z0-9]*$'
                   minLength: 3
                   maxLength: 16
         required: true
       responses:
-        '201':
-          description: User log-in action successful
+        "200":
+          description: User log-in action successful (user exists)
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   identifier:
-                    type: integer
-                    minimum: 0
-                    example: 123
-  /stream/{userID}:
-    parameters:
-    - name: userID
-      in: path
-      required: true
-      schema:
-        type: string
-    get:
-      tags: ["data retrieval"]
-      summary: Returns the user stream
-      description: |
-        Given a user identifier a stream of photos (images)
-        is returned in the response. If the requested userID
-        does not exist, an error will be given
-      operationId: getMyStream
-      responses:
-        "200":
-          description: The user is found and the stream is the content.
+                    { $ref: "#/components/schemas/UserID" }
+        '201':
+          description: User log-in action successful (user created)
           content:
             application/json:
               schema:
-                type: string
-                example: TODO - WTF SHOULD THIS BE?
-        "404":
-          description: The user identifier is not valid.
-  /user/{userID}:
+                type: object
+                properties:
+                  identifier:
+                    { $ref: "#/components/schemas/UserID" }
+  /users/:
     parameters:
-    - name: userID
-      in: path
+    - name: searchQuery
+      in: query
       required: true
       schema:
         type: string
     get:
-      tags: ["data retrieval"]
+      tags: ["Users"]
+      summary: Search user by partial username
+      description: |
+        Given a partial username (search query)
+        a list of possible matches is returned
+        in the response.
+      operationId: searchUsers
+      responses:
+        "200":
+          description: |
+            The query has been executed successfully.
+            A list of possible matches is in the content.
+            If empty, no username matches the query.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usernames:
+                    { $ref: "#/components/schemas/UsersList" }
+        "400":
+          description: Bad request. Have you submitted all the required parameters?
+
+  /users/{username}:
+    parameters:
+    - {$ref: "#/components/parameters/username"}
+    get:
+      tags: ["Users"]
       summary: Get user profile
       description: |
         Given a user identifier, the user profile
@@ -87,12 +145,13 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: TODO - CREATE USER COMPONENT
+                { $ref: "#/components/schemas/User" }
         "404":
           description: The user identifier is not valid.
-    post:
-      tags: ["data manipulation"]
+    put:
+      parameters:
+        - { $ref: "#/components/parameters/userID" }
+      tags: ["Users"]
       summary: Change user username
       description: |
         This can be used to modify the user username
@@ -107,10 +166,45 @@ paths:
               properties:
                 username:
                   type: string
-                  example: Maria.00
+                  example: maria.00
         required: true
       responses:
         "200":
           description: User username updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    { $ref: "#/components/schemas/Username" }
+        "400":
+          description: Bad request. Have you submitted all the required parameters?
+        "404":
+          description: The user identifier is not valid.
+
+  /users/{userID}/stream:
+    parameters:
+    - name: userID
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      tags: ["Users"]
+      summary: Returns the user stream
+      description: |
+        Given a user identifier a stream of photos (images)
+        is returned in the response. If the requested userID
+        does not exist, an error will be given
+      operationId: getMyStream
+      responses:
+        "200":
+          description: The user is found and the stream is the content.
+          content:
+            application/json:
+              schema:
+                type: string
+                example: TODO - WTF SHOULD THIS BE?
         "404":
           description: The user identifier is not valid.
