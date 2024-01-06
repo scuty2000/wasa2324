@@ -82,10 +82,7 @@ components:
       type: object
       properties:
         id:
-          readOnly: true
-          type: integer
-          minimum: 0
-          example: 1234
+          { $ref: "#/components/schemas/ResourceID" }
         url:
           { $ref: "#/components/schemas/PhotoURL" }
         date:
@@ -111,7 +108,7 @@ components:
       schema:
         { $ref: "#/components/schemas/Username" }
     userID:
-      name: identifier
+      name: userID
       in: query
       required: true
       schema:
@@ -124,6 +121,15 @@ components:
         type: integer
         minimum: 0
         example: 2
+    photoID:
+      name: photoID
+      in: path
+      required: true
+      description: ID of the photo
+      schema:
+        type: integer
+        minimum: 0
+        example: 1234
 
 paths:
   /session:
@@ -298,9 +304,7 @@ paths:
             paginationIndex is less or equal of paginationLimit
         "404":
           description: No user found for the required username.
-  /users/{username}/photos/:
-    parameters:
-      - { $ref: "#/components/parameters/username" }
+  /photos/:
     post:
       parameters:
         - { $ref: "#/components/parameters/userID" }
@@ -329,7 +333,7 @@ paths:
                   url:
                     { $ref: "#/components/schemas/PhotoURL" }
         "400":
-          description: "An error as occurred. Check image format."
+          description: An error as occurred. Check image format.
           content:
             application/json:
               schema:
@@ -338,3 +342,55 @@ paths:
                   message:
                     type: string
                     example: The file is not an image.
+
+  /photos/{photoID}:
+    parameters:
+      - { $ref: "#/components/parameters/photoID" }
+    delete:
+      tags: ["Photos"]
+      parameters:
+          - { $ref: "#/components/parameters/userID" }
+      operationId: deletePhoto
+      summary: Delete a photo
+      description: |
+        This endpoint allows the user to delete
+        one of its photos using the ID.
+      responses:
+        "204":
+          description: The photo has been deleted successfully.
+        "404":
+          description: Photo not found.
+
+  /photos/{photoID}/likes/:
+    parameters:
+      - { $ref: "#/components/parameters/photoID" }
+      - { $ref: "#/components/parameters/userID" }
+    put:
+      tags: ["Photos"]
+      operationId: likePhoto
+      summary: Like a photo
+      description: This endpoint is used to like a photo
+      responses:
+        "201":
+          description: Like has been added.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likeID:
+                    { $ref: "#/components/schemas/ResourceID" }
+        "404":
+          description: Photo not found.
+    delete:
+      tags: ["Photos"]
+      operationId: unlikePhoto
+      summary: Unlike a photo.
+      description: |
+        This endpoint is used to remove the
+        like from a photo.
+      responses:
+        "204":
+          description: The like has been removed.
+        "404":
+          description: Photo not found.
