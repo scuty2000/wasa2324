@@ -67,11 +67,10 @@ components:
           { $ref: "#/components/schemas/ResourceID" }
         issuer:
           { $ref: "#/components/schemas/Username" }
+        date:
+          { $ref: "#/components/schemas/Date" }
         text:
-          type: string
-          minLength: 1
-          example: Nice photo bro!
-
+          { $ref: "#/components/schemas/CommentText"}
     PhotoURL:
       readOnly: true
       type: string
@@ -86,8 +85,7 @@ components:
         url:
           { $ref: "#/components/schemas/PhotoURL" }
         date:
-          type: string
-          format: date-time
+          { $ref: "#/components/schemas/Date" }
         likesCount:
           type: integer
           minimum: 0
@@ -100,6 +98,15 @@ components:
           type: boolean
           example: false
 
+    Date:
+      type: string
+      format: date-time
+
+    CommentText:
+      type: string
+      minLength: 1
+      example: Nice photo bro!
+
   parameters:
     username:
       name: username
@@ -111,6 +118,7 @@ components:
       name: userID
       in: query
       required: true
+      description: User private identifier
       schema:
         { $ref: "#/components/schemas/UserID" }
     paginationIndex:
@@ -126,6 +134,24 @@ components:
       in: path
       required: true
       description: ID of the photo
+      schema:
+        type: integer
+        minimum: 0
+        example: 1234
+    commentID:
+      name: commentID
+      in: path
+      required: true
+      description: ID of the comment
+      schema:
+        type: integer
+        minimum: 0
+        example: 1234
+    likeID:
+      name: likeID
+      in: path
+      required: true
+      description: ID of the like
       schema:
         type: integer
         minimum: 0
@@ -225,7 +251,7 @@ paths:
                 { $ref: "#/components/schemas/User" }
         "404":
           description: The user identifier is not valid.
-    put:
+    patch:
       parameters:
         - { $ref: "#/components/parameters/userID" }
       tags: ["Users"]
@@ -261,6 +287,68 @@ paths:
           description: You have no permission to execute this operation.
         "404":
           description: User not found.
+
+  /users/{username}/banned/:
+    parameters:
+      - { $ref: "#/components/parameters/username" }
+      - { $ref: "#/components/parameters/userID" }
+    post:
+      tags: ["Users"]
+      operationId: banUser
+      summary: Ban a user
+      description: |
+        This endpoint is used to ban a user.
+        The banned user (id in request body)
+        cannot see nor interact with any of
+        the banning user (id in parameters)
+        content.
+
+        When the banned user attempts any
+        operation on the banning user content
+        an error will be returned.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bannedUsername:
+                  { $ref: "#/components/schemas/Username" }
+      responses:
+        "201":
+          description: User banned successfully.
+        "400":
+          description: Invalid request.
+        "401":
+          description: You have no authorization to perform this action.
+        "404":
+          description: Banning or banned user not found.
+
+  /users/{username}/banned/{bannedUsername}:
+    parameters:
+      - { $ref: "#/components/parameters/username" }
+      - { $ref: "#/components/parameters/userID" }
+      - name: bannedUsername
+        in: path
+        required: true
+        schema:
+          { $ref: "#/components/schemas/Username" }
+    delete:
+      tags: ["Users"]
+      operationId: unbanUser
+      summary: Unban a user
+      description: |
+        This endpoint is used to unban
+        a user.
+      responses:
+        "200":
+          description: The user has been unbanned successfully
+        "400":
+          description: Invalid request.
+        "401":
+          description: You have no authorization to perform this action.
+        "404":
+          description: Banning or banned user not found.
 
   /users/{username}/stream:
     parameters:
@@ -312,8 +400,6 @@ paths:
       summary: Upload a photo
       description: |
         This endpoint is used to upload a photo.
-        You must encode the image in base64 format.
-
         If an error occurs, a error is returned.
       operationId: uploadPhoto
       requestBody:
@@ -382,15 +468,93 @@ paths:
                     { $ref: "#/components/schemas/ResourceID" }
         "404":
           description: Photo not found.
+
+  /photos/{photoID}/likes/{likeID}:
+    parameters:
+      - { $ref: "#/components/parameters/likeID" }
+      - { $ref: "#/components/parameters/photoID" }
+      - { $ref: "#/components/parameters/userID" }
     delete:
       tags: ["Photos"]
       operationId: unlikePhoto
-      summary: Unlike a photo.
+      summary: Unlike a photo
       description: |
         This endpoint is used to remove the
         like from a photo.
       responses:
         "204":
           description: The like has been removed.
+        "404":
+          description: Photo not found.
+
+  /photos/{photoID}/comments/:
+    parameters:
+      - { $ref: "#/components/parameters/photoID" }
+    get:
+      tags: ["Photos"]
+      summary: Get photo comments
+      operationId: getPhotoComments
+      description: |
+        This endpoint is used to get the
+        comments on a photo.
+      responses:
+        "200":
+          description: Photo found and comments in content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comments:
+                    type: array
+                    items:
+                      { $ref: "#/components/schemas/PhotoComment" }
+    post:
+      parameters:
+        - { $ref: "#/components/parameters/userID" }
+      tags: ["Photos"]
+      operationId: commentPhoto
+      summary: Add a comment
+      description: |
+        This endpoint is used to leave
+        a comment on a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  { $ref: "#/components/schemas/CommentText"}
+      responses:
+        "201":
+          description: Comment created; details in content.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    { $ref: "#/components/schemas/ResourceID" }
+                  text:
+                    { $ref: "#/components/schemas/CommentText"}
+        "404":
+          description: Photo not found.
+
+  /photos/{photoID}/comments/{commentID}:
+    parameters:
+      - { $ref: "#/components/parameters/commentID" }
+      - { $ref: "#/components/parameters/userID" }
+    delete:
+      tags: ["Photos"]
+      operationId: uncommentPhoto
+      summary: Delete a comment
+      description: |
+        This endpoint is used to remove
+        a comment from a photo.
+      responses:
+        "204":
+          description: Comment deleted.
         "404":
           description: Photo not found.
