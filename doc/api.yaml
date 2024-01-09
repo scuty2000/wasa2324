@@ -21,6 +21,8 @@ components:
 
   schemas:
     UUID:
+      description: |
+        Universally unique identifier of the user.
       type: string
       pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
       minLength: 36
@@ -51,6 +53,7 @@ components:
         photosCount:
           { $ref: "#/components/schemas/ResourceCount" }
         isBanned:
+          readOnly: true
           type: boolean
 
     Username:
@@ -63,7 +66,7 @@ components:
       type: array
       readOnly: true
       items:
-        { $ref: "#/components/schemas/Username" }
+        { $ref: "#/components/schemas/User" }
 
     ResourceID:
       readOnly: true
@@ -250,9 +253,9 @@ paths:
                   token:
                     { $ref: "#/components/schemas/BearerToken" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/:
     parameters:
@@ -284,14 +287,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  usernames:
+                  users:
                     { $ref: "#/components/schemas/UsersList" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}:
     parameters:
@@ -316,15 +319,17 @@ paths:
               schema:
                 { $ref: "#/components/schemas/User" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
-  /user/{userID}/username:
+  /users/{userID}/username:
     parameters:
     - {$ref: "#/components/parameters/userID"}
     put:
@@ -357,13 +362,15 @@ paths:
                   username:
                     { $ref: "#/components/schemas/Username" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/banned/:
     parameters:
@@ -385,6 +392,11 @@ paths:
         operation on the banning user content
         an error will be returned.
       requestBody:
+        required: true
+        description: |
+          The request body should contain
+          the UUID of the user that will
+          be banned.
         content:
           application/json:
             schema:
@@ -396,13 +408,15 @@ paths:
         '204':
           description: User banned successfully.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/banned/{bannedUserID}:
     parameters:
@@ -426,13 +440,120 @@ paths:
         '204':
           description: The user has been unbanned successfully.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
+
+  /users/{userID}/followers:
+    parameters:
+    - { $ref: "#/components/parameters/userID" }
+    get:
+      tags: ["Users"]
+      operationId: getFollowers
+      security:
+        - BearerAuth: []
+      summary: Get followers
+      description: |
+        This endpoint is used to get the
+        list of users that are following
+        the user.
+      responses:
+        '200':
+            description: User found and followers list in content.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    followingUsers:
+                      { $ref: "#/components/schemas/UsersList" }
+
+  /users/{userID}/following:
+    parameters:
+    - { $ref: "#/components/parameters/userID" }
+    get:
+      tags: ["Users"]
+      operationId: getFollowing
+      security:
+        - BearerAuth: []
+      summary: Get following
+      description: |
+        This endpoint is used to get the
+        list of users the user is following.
+      responses:
+        '200':
+            description: User found and following list in content.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    followedUsers:
+                      { $ref: "#/components/schemas/UsersList" }
+
+  /users/{userID}/following/{followedID}:
+    parameters:
+    - { $ref: "#/components/parameters/userID" }
+    - name: followedID
+      in: path
+      description: ID of the followed user
+      required: true
+      schema:
+        { $ref: "#/components/schemas/UUID" }
+    put:
+      tags: ["Users"]
+      operationId: followUser
+      security:
+        - BearerAuth: []
+      summary: Follow a user
+      description: |
+        This endpoint is used to "follow" a
+        user, meaning that the followed user
+        content will be shown is the stream
+        of the follower user.
+      responses:
+        '201':
+          description: User followed successfully.
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: ["Users"]
+      operationId: unfollowUser
+      security:
+        - BearerAuth: []
+      summary: Unfollow a user
+      description: |
+        This endpoint is used to "unfollow"
+        a followed user, meaning that the
+        "unfollowed" user content will no
+        more be part of the user stream.
+      responses:
+        '204':
+          description: User unfollowed successfully.
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/stream:
     parameters:
@@ -457,7 +578,7 @@ paths:
         If the requested userID does not exist, or the "paginationIndex"
         is bigger than "paginationLimit" an error will be returned.
       responses:
-        "200":
+        '200':
           description: The user is found and the stream is the content.
           content:
             application/json:
@@ -473,13 +594,15 @@ paths:
                     minimum: 0
                     example: 4
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/:
     post:
@@ -492,6 +615,7 @@ paths:
         This endpoint is used to upload a photo.
         If an error occurs, a error is returned.
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -514,17 +638,25 @@ paths:
                   photoID:
                     { $ref: "#/components/schemas/ResourceID" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/{photoID}:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
+      - name: userID
+        in: header
+        required: true
+        description: User UUID
+        schema:
+            { $ref: "#/components/schemas/UUID" }
     delete:
       tags: ["Photos"]
       operationId: deletePhoto
@@ -535,17 +667,18 @@ paths:
         This endpoint allows the user to delete
         one of its photos using the ID.
       responses:
-        "204":
+        '204':
           description: The photo has been deleted successfully.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
-
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/{photoID}/likes/{userID}:
     parameters:
@@ -562,13 +695,15 @@ paths:
         "201":
           description: Like has been added.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
     delete:
       tags: ["Photos"]
       operationId: unlikePhoto
@@ -582,13 +717,15 @@ paths:
         '204':
           description: The like has been removed.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/{photoID}/comments/:
     parameters:
@@ -615,13 +752,13 @@ paths:
                     items:
                       { $ref: "#/components/schemas/PhotoComment" }
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/{photoID}/comments/{userID}:
     parameters:
@@ -660,13 +797,15 @@ paths:
                   text:
                     { $ref: "#/components/schemas/CommentText"}
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
 
   /photos/{photoID}/comments/{userID}/{commentID}:
     parameters:
@@ -686,10 +825,12 @@ paths:
         '204':
           description: Comment deleted.
         '400':
-          $ref: "#/components/responses/BadRequest"
+          { $ref: "#/components/responses/BadRequest" }
         '401':
-          $ref: "#/components/responses/Unauthorized"
+          { $ref: "#/components/responses/Unauthorized" }
         '403':
-          $ref: "#/components/responses/Forbidden"
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
-          $ref: "#/components/responses/InternalServerError"
+          { $ref: "#/components/responses/InternalServerError" }
