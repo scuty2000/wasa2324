@@ -4,7 +4,7 @@ info:
   description: |-
     This is the documentation for the APIs for the WASAPhoto Project,
     for the accademic year 23/24 by Scutigliani Luca (1914401)
-  version: 0.0.2
+  version: 1.0.0
 
 servers:
   - url: wasaphoto.lucascutigliani.it
@@ -20,6 +20,28 @@ components:
       bearerFormat: "JWT"
 
   schemas:
+
+    # Auth
+
+    AuthResponse:
+      type: object
+      properties:
+        identifier:
+          { $ref: "#/components/schemas/UUID" }
+        token:
+          { $ref: "#/components/schemas/BearerToken" }
+      readOnly: true
+
+    BearerToken:
+      description: |
+        Token used to fullfil the Bearer Authentication
+        standard.
+      type: string
+      pattern: ^Bearer\s[A-Za-z0-9-._~+/]+={0,2}$
+      example: Bearer CookEN7QWidlYDjRTH8I~n99YJfqCC==
+
+    # Identifiers
+
     UUID:
       description: |
         Universally unique identifier of the user.
@@ -28,18 +50,34 @@ components:
       minLength: 36
       maxLength: 36
 
-    BearerToken:
-      type: string
-      pattern: ^Bearer\s[A-Za-z0-9-._~+/]+={0,2}$
-      example: Bearer CookEN7QWidlYDjRTH8I~n99YJfqCC==
+    ResourceID:
+      description: Simple resource identifier.
+      readOnly: true
+      type: integer
+      minimum: 0
+      example: 1234
+
+    # Counters
 
     ResourceCount:
+      description: Simple resource counter.
       type: integer
       min: 0
       example: 42
       readOnly: true
 
+    # User related
+
     User:
+      description: |
+        This component is the representation
+        of a user of the system.
+
+        It contains the UUID of the user,
+        the username, the following/followers/photo
+        counters, and whether or not the user is
+        banned from the pov of the user executing
+        an operation.
       type: object
       properties:
         uuid:
@@ -55,46 +93,35 @@ components:
         isBanned:
           readOnly: true
           type: boolean
+      readOnly: true
 
     Username:
+      description: Name of the user.
       type: string
       example: maria00
-      maxLength: 32
-      minLength: 5
+      maxLength: 16
+      minLength: 3
 
     UsersList:
+      description: List of users
       type: array
-      readOnly: true
       items:
         { $ref: "#/components/schemas/User" }
-
-    ResourceID:
       readOnly: true
-      type: integer
-      minimum: 0
-      example: 1234
 
-    PhotoLike:
-      type: object
-      properties:
-        id:
-          { $ref: "#/components/schemas/ResourceID" }
-        issuer:
-          { $ref: "#/components/schemas/Username" }
-
-    PhotoComment:
-      type: object
-      properties:
-        id:
-          { $ref: "#/components/schemas/ResourceID" }
-        issuer:
-          { $ref: "#/components/schemas/Username" }
-        date:
-          { $ref: "#/components/schemas/Date" }
-        text:
-          { $ref: "#/components/schemas/CommentText"}
+    # Photo related
 
     Photo:
+      description: |
+        This component is the representation
+        of a photo.
+
+        It contains a simple id for the photo,
+        the UUID of the author, the date of
+        upload, the likes/comments counters
+        and whether or not the photo has been
+        liked from the pov of the user executing
+        an operation.
       type: object
       properties:
         id:
@@ -114,96 +141,138 @@ components:
         liked:
           type: boolean
           example: false
+      readOnly: true
 
-    Date:
+    PhotoURL:
+      readOnly: true
       type: string
-      format: date-time
+      pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
+      example: https://wasaphoto.lucascutigliani.it/uploads/1234.png
+
+    PhotoComment:
+      description: |
+        This component is the representation
+        of a photo comment.
+
+        It contains the simple id for the comment,
+        the UUID of the issuing user, the date of
+        issuing and the text of the comment.
+      type: object
+      properties:
+        id:
+          { $ref: "#/components/schemas/ResourceID" }
+        issuer:
+          { $ref: "#/components/schemas/UUID" }
+        date:
+          { $ref: "#/components/schemas/Date" }
+        text:
+          { $ref: "#/components/schemas/CommentText"}
+      readOnly: true
 
     CommentText:
+      description: Simple comment text representation.
       type: string
       minLength: 1
       example: Nice photo bro!
 
+    # Misc
+
+    Date:
+      description: Simple date representation.
+      type: string
+      format: date-time
+      readOnly: true
+
   parameters:
+
     userID:
       name: userID
       in: path
       required: true
-      description: User UUID
+      description: User UUID.
       schema:
         { $ref: "#/components/schemas/UUID" }
+
     paginationIndex:
       name: paginationIndex
       in: query
       required: false
+      description: Current page index.
       schema:
         type: integer
         minimum: 0
         example: 2
+
     photoID:
       name: photoID
       in: path
       required: true
-      description: ID of the photo
+      description: Photo identifier parameter.
       schema:
-        type: integer
-        minimum: 0
-        example: 1234
+        { $ref: "#/components/schemas/ResourceID" }
+
     commentID:
       name: commentID
       in: path
       required: true
-      description: ID of the comment
+      description: Comment identifier parameter.
       schema:
-        type: integer
-        minimum: 0
-        example: 1234
-    likeID:
-      name: likeID
-      in: path
-      required: true
-      description: ID of the like
-      schema:
-        type: integer
-        minimum: 0
-        example: 1234
+        { $ref: "#/components/schemas/ResourceID" }
 
   responses:
     BadRequest:
-      description: Bad Request. The request syntax is incorrect.
+      description: |
+        Bad Request. The request syntax is incorrect.
       content:
         text/plain:
           schema:
             type: string
-            example: "Bad Request: Syntax error in the request."
+            example: |
+              Bad Request: Syntax error in the request.
     Unauthorized:
-      description: Unauthorized. Authentication is required and has failed or has not been provided.
+      description: |
+        Unauthorized. Authentication is required and
+        has failed or has not been provided.
       content:
         text/plain:
           schema:
             type: string
-            example: "Unauthorized: Authentication failed."
+            example: |
+              Unauthorized: Authentication failed or not provided.
     Forbidden:
-      description: Forbidden. The user does not have the permissions to perform this action.
+      description: |
+        Forbidden. The user does not have the
+        permissions to perform this action.
       content:
         text/plain:
           schema:
             type: string
-            example: "Forbidden: Insufficient permissions to perform this action."
+            example: |
+             Forbidden: Insufficient permissions to perform
+             this action. You may have tried to perform an
+             operation on another user data or tried to
+             retrieve data from a user that banned you.
     NotFound:
-      description: Not Found. The requested resource could not be found.
+      description: |
+        Not Found. The requested resource could
+        not be found.
       content:
         text/plain:
           schema:
             type: string
-            example: "Not Found: The requested resource was not found."
+            example: |
+              Not Found: The requested resource was not found.
     InternalServerError:
-      description: Internal Server Error. A generic error occurred on the server.
+      description: |
+        Internal Server Error. A generic error
+        occurred on the server.
       content:
         text/plain:
           schema:
             type: string
-            example: "Internal Server Error: A generic error occurred on the server."
+            example: |
+              Internal Server Error: A generic error
+              occurred on the server.
 
 paths:
   /session:
@@ -212,23 +281,23 @@ paths:
       operationId: doLogin
       summary: Logs in the user
       description: |-
-        If the user does not exist, it will be created,
-        and an identifier is returned.
-        If the user exists, the user identifier is returned.
+        This endpoint is used for the authentication
+        of the users.
+
+        If the user doesn't exist it will be created.
+
+        Will return a UUID for the user
+        and an authentication token.
       requestBody:
         description: User details
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
                 name:
-                  type: string
-                  example: Maria
-                  pattern: '^[a-zA-Z0-9]*$'
-                  minLength: 3
-                  maxLength: 16
-        required: true
+                  { $ref: "#/components/schemas/Username" }
       responses:
         '200':
           description: User log-in action successful (user exists)
@@ -262,10 +331,9 @@ paths:
     - name: searchQuery
       in: query
       required: true
-      description: User search query
+      description: Partial username search query.
       schema:
-        type: string
-        maxLength: 32
+        { $ref: "#/components/schemas/Username" }
     get:
       tags: ["Users"]
       operationId: searchUsers
@@ -281,7 +349,9 @@ paths:
           description: |
             The query has been executed successfully.
             A list of possible matches is in the content.
-            If empty, no username matches the query.
+
+            If empty, no username mathing the query is
+            found.
           content:
             application/json:
               schema:
@@ -313,7 +383,9 @@ paths:
         error will be returned.
       responses:
         '200':
-          description: The user is found and the profile is in the content.
+          description: |
+            The user is found and the user
+            details are in the content.
           content:
             application/json:
               schema:
@@ -342,7 +414,9 @@ paths:
         This can be used to modify the user username
         for a given user identifier.
       requestBody:
-        description: New username
+        description: |
+          The request body should contain
+          the new username for the user.
         content:
           application/json:
             schema:
@@ -352,61 +426,8 @@ paths:
                   { $ref: "#/components/schemas/Username" }
         required: true
       responses:
-        '200':
-          description: User username updated successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  username:
-                    { $ref: "#/components/schemas/Username" }
-        '400':
-          { $ref: "#/components/responses/BadRequest" }
-        '401':
-          { $ref: "#/components/responses/Unauthorized" }
-        '403':
-          { $ref: "#/components/responses/Forbidden" }
-        '404':
-          { $ref: "#/components/responses/NotFound" }
-        '500':
-          { $ref: "#/components/responses/InternalServerError" }
-
-  /users/{userID}/banned/:
-    parameters:
-      - { $ref: "#/components/parameters/userID" }
-    post:
-      tags: ["Users"]
-      operationId: banUser
-      security:
-        - BearerAuth: []
-      summary: Ban a user
-      description: |
-        This endpoint is used to ban a user.
-        The banned user (id in request body)
-        cannot see nor interact with any of
-        the banning user (id in parameters)
-        content.
-
-        When the banned user attempts any
-        operation on the banning user content
-        an error will be returned.
-      requestBody:
-        required: true
-        description: |
-          The request body should contain
-          the UUID of the user that will
-          be banned.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                bannedUser:
-                  { $ref: "#/components/schemas/UUID" }
-      responses:
         '204':
-          description: User banned successfully.
+          description: User username updated successfully.
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -427,6 +448,35 @@ paths:
         description: Banned User UUID
         schema:
           { $ref: "#/components/schemas/UUID" }
+    put:
+      tags: ["Users"]
+      operationId: banUser
+      security:
+        - BearerAuth: []
+      summary: Ban a user
+      description: |
+        This endpoint is used to ban a user.
+        The banned user (id in request body)
+        cannot see nor interact with any of
+        the banning user (id in parameters)
+        content.
+
+        When the banned user attempts any
+        operation on the banning user content
+        a Forbidden error will be returned.
+      responses:
+        '204':
+          description: User banned successfully.
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
     delete:
       tags: ["Users"]
       operationId: unbanUser
@@ -458,7 +508,7 @@ paths:
       operationId: getFollowers
       security:
         - BearerAuth: []
-      summary: Get followers
+      summary: Get user followers
       description: |
         This endpoint is used to get the
         list of users that are following
@@ -473,6 +523,16 @@ paths:
                   properties:
                     followingUsers:
                       { $ref: "#/components/schemas/UsersList" }
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/following:
     parameters:
@@ -482,7 +542,7 @@ paths:
       operationId: getFollowing
       security:
         - BearerAuth: []
-      summary: Get following
+      summary: Get following users
       description: |
         This endpoint is used to get the
         list of users the user is following.
@@ -496,6 +556,16 @@ paths:
                   properties:
                     followedUsers:
                       { $ref: "#/components/schemas/UsersList" }
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/following/{followedID}:
     parameters:
@@ -518,7 +588,7 @@ paths:
         content will be shown is the stream
         of the follower user.
       responses:
-        '201':
+        '204':
           description: User followed successfully.
         '400':
           { $ref: "#/components/responses/BadRequest" }
@@ -555,7 +625,7 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /users/{userID}/stream:
+  /stream/{userID}:
     parameters:
     - { $ref: "#/components/parameters/userID" }
     get:
@@ -565,7 +635,7 @@ paths:
       operationId: getMyStream
       security:
         - BearerAuth: []
-      summary: Returns the photo stream via a pagination index
+      summary: Get the user paginated photo stream
       description: |
         Given a user identifier a stream of photos (images)
         is returned in the response.
@@ -616,6 +686,11 @@ paths:
         If an error occurs, a error is returned.
       requestBody:
         required: true
+        description: |
+          The request body should contain
+          the image that needs to be uploaded
+          in binary format and the UUID of the
+          user uploading the photo.
         content:
           multipart/form-data:
             schema:
@@ -630,9 +705,17 @@ paths:
       responses:
         '201':
           description: Photo successfully uploaded, photo id in the content
+          headers:
+            Location:
+              description: |
+                URL location of the uploaded image.
+              schema:
+                { $ref: "#/components/schemas/PhotoURL" }
           content:
             application/json:
               schema:
+                description: |
+                  ID assigned to the uploaded photo
                 type: object
                 properties:
                   photoID:
@@ -692,7 +775,7 @@ paths:
       summary: Like a photo
       description: This endpoint is used to like a photo
       responses:
-        "201":
+        "204":
           description: Like has been added.
         '400':
           { $ref: "#/components/responses/BadRequest" }
