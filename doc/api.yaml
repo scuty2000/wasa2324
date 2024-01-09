@@ -13,27 +13,45 @@ servers:
     description: Development URL
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "JWT"
+
   schemas:
-    uuid:
+    UUID:
       type: string
-      pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
       minLength: 36
       maxLength: 36
+
+    BearerToken:
+      type: string
+      pattern: ^Bearer\s[A-Za-z0-9-._~+/]+={0,2}$
+      example: Bearer CookEN7QWidlYDjRTH8I~n99YJfqCC==
+
+    ResourceCount:
+      type: integer
+      min: 0
+      example: 42
+      readOnly: true
 
     User:
       type: object
       properties:
+        uuid:
+          { $ref: "#/components/schemas/UUID" }
         username:
           { $ref: "#/components/schemas/Username" }
-        followers:
-          { $ref: "#/components/schemas/UsersList" }
-        following:
-          { $ref: "#/components/schemas/UsersList" }
-        photos:
-          readOnly: true
-          type: array
-          items:
-            { $ref: "#/components/schemas/Photo" }
+        followersCount:
+          { $ref: "#/components/schemas/ResourceCount" }
+        followingCount:
+          { $ref: "#/components/schemas/ResourceCount" }
+        photosCount:
+          { $ref: "#/components/schemas/ResourceCount" }
+        isBanned:
+          type: boolean
 
     Username:
       type: string
@@ -46,11 +64,6 @@ components:
       readOnly: true
       items:
         { $ref: "#/components/schemas/Username" }
-
-    UserID:
-      type: integer
-      minimum: 0
-      example: 123
 
     ResourceID:
       readOnly: true
@@ -78,19 +91,13 @@ components:
         text:
           { $ref: "#/components/schemas/CommentText"}
 
-    PhotoURL:
-      readOnly: true
-      type: string
-      pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
-      example: https://wasaphoto.lucascutigliani.it/uploads/1234.png
-
     Photo:
       type: object
       properties:
         id:
           { $ref: "#/components/schemas/ResourceID" }
-        url:
-          { $ref: "#/components/schemas/PhotoURL" }
+        author:
+          { $ref: "#/components/schemas/UUID" }
         date:
           { $ref: "#/components/schemas/Date" }
         likesCount:
@@ -115,19 +122,13 @@ components:
       example: Nice photo bro!
 
   parameters:
-    username:
-      name: username
-      in: path
-      required: true
-      schema:
-        { $ref: "#/components/schemas/Username" }
     userID:
       name: userID
-      in: query
+      in: path
       required: true
-      description: User private identifier
+      description: User UUID
       schema:
-        { $ref: "#/components/schemas/UserID" }
+        { $ref: "#/components/schemas/UUID" }
     paginationIndex:
       name: paginationIndex
       in: query
@@ -164,16 +165,53 @@ components:
         minimum: 0
         example: 1234
 
+  responses:
+    BadRequest:
+      description: Bad Request. The request syntax is incorrect.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Bad Request: Syntax error in the request."
+    Unauthorized:
+      description: Unauthorized. Authentication is required and has failed or has not been provided.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Unauthorized: Authentication failed."
+    Forbidden:
+      description: Forbidden. The user does not have the permissions to perform this action.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Forbidden: Insufficient permissions to perform this action."
+    NotFound:
+      description: Not Found. The requested resource could not be found.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Not Found: The requested resource was not found."
+    InternalServerError:
+      description: Internal Server Error. A generic error occurred on the server.
+      content:
+        text/plain:
+          schema:
+            type: string
+            example: "Internal Server Error: A generic error occurred on the server."
+
 paths:
   /session:
     post:
       tags: ["Login"]
+      operationId: doLogin
       summary: Logs in the user
       description: |-
         If the user does not exist, it will be created,
         and an identifier is returned.
         If the user exists, the user identifier is returned.
-      operationId: doLogin
       requestBody:
         description: User details
         content:
@@ -189,7 +227,7 @@ paths:
                   maxLength: 16
         required: true
       responses:
-        "200":
+        '200':
           description: User log-in action successful (user exists)
           content:
             application/json:
@@ -197,7 +235,9 @@ paths:
                 type: object
                 properties:
                   identifier:
-                    { $ref: "#/components/schemas/UserID" }
+                    { $ref: "#/components/schemas/UUID" }
+                  token:
+                    { $ref: "#/components/schemas/BearerToken" }
         '201':
           description: User log-in action successful (user created)
           content:
@@ -206,24 +246,35 @@ paths:
                 type: object
                 properties:
                   identifier:
-                    { $ref: "#/components/schemas/UserID" }
+                    { $ref: "#/components/schemas/UUID" }
+                  token:
+                    { $ref: "#/components/schemas/BearerToken" }
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /users/:
     parameters:
     - name: searchQuery
       in: query
       required: true
+      description: User search query
       schema:
         type: string
+        maxLength: 32
     get:
       tags: ["Users"]
+      operationId: searchUsers
+      security:
+        - BearerAuth: []
       summary: Search user by partial username
       description: |
         Given a partial username (search query)
         a list of possible matches is returned
         in the response.
-      operationId: searchUsers
       responses:
-        "200":
+        '200':
           description: |
             The query has been executed successfully.
             A list of possible matches is in the content.
@@ -235,38 +286,56 @@ paths:
                 properties:
                   usernames:
                     { $ref: "#/components/schemas/UsersList" }
-        "400":
-          description: Bad request. Have you submitted all the required parameters?
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /users/{username}:
+  /users/{userID}:
     parameters:
-    - {$ref: "#/components/parameters/username"}
+    - {$ref: "#/components/parameters/userID"}
     get:
       tags: ["Users"]
+      operationId: getUserProfile
+      security:
+        - BearerAuth: []
       summary: Get user profile
       description: |
         Given a user identifier, the user profile
-        is returned. If the user is not found, an
+        is returned.
+
+        If the user is not found, an
         error will be returned.
-      operationId: getUserProfile
       responses:
-        "200":
+        '200':
           description: The user is found and the profile is in the content.
           content:
             application/json:
               schema:
                 { $ref: "#/components/schemas/User" }
-        "404":
-          description: The user identifier is not valid.
-    patch:
-      parameters:
-        - { $ref: "#/components/parameters/userID" }
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /user/{userID}/username:
+    parameters:
+    - {$ref: "#/components/parameters/userID"}
+    put:
       tags: ["Users"]
+      operationId: setMyUserName
+      security:
+        - BearerAuth: []
       summary: Change user username
       description: |
         This can be used to modify the user username
         for a given user identifier.
-      operationId: setMyUserName
       requestBody:
         description: New username
         content:
@@ -275,11 +344,10 @@ paths:
               type: object
               properties:
                 username:
-                  type: string
-                  example: maria.00
+                  { $ref: "#/components/schemas/Username" }
         required: true
       responses:
-        "200":
+        '200':
           description: User username updated successfully.
           content:
             application/json:
@@ -288,20 +356,23 @@ paths:
                 properties:
                   username:
                     { $ref: "#/components/schemas/Username" }
-        "400":
-          description: Bad request. Have you submitted all the required parameters?
-        "403":
-          description: You have no permission to execute this operation.
-        "404":
-          description: User not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /users/{username}/banned/:
+  /users/{userID}/banned/:
     parameters:
-      - { $ref: "#/components/parameters/username" }
       - { $ref: "#/components/parameters/userID" }
     post:
       tags: ["Users"]
       operationId: banUser
+      security:
+        - BearerAuth: []
       summary: Ban a user
       description: |
         This endpoint is used to ban a user.
@@ -319,51 +390,60 @@ paths:
             schema:
               type: object
               properties:
-                bannedUsername:
-                  { $ref: "#/components/schemas/Username" }
+                bannedUser:
+                  { $ref: "#/components/schemas/UUID" }
       responses:
-        "201":
+        '204':
           description: User banned successfully.
-        "400":
-          description: Invalid request.
-        "401":
-          description: You have no authorization to perform this action.
-        "404":
-          description: Banning or banned user not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /users/{username}/banned/{bannedUsername}:
+  /users/{userID}/banned/{bannedUserID}:
     parameters:
-      - { $ref: "#/components/parameters/username" }
       - { $ref: "#/components/parameters/userID" }
-      - name: bannedUsername
+      - name: bannedUserID
         in: path
         required: true
+        description: Banned User UUID
         schema:
-          { $ref: "#/components/schemas/Username" }
+          { $ref: "#/components/schemas/UUID" }
     delete:
       tags: ["Users"]
       operationId: unbanUser
+      security:
+        - BearerAuth: []
       summary: Unban a user
       description: |
         This endpoint is used to unban
         a user.
       responses:
-        "200":
-          description: The user has been unbanned successfully
-        "400":
-          description: Invalid request.
-        "401":
-          description: You have no authorization to perform this action.
-        "404":
-          description: Banning or banned user not found.
+        '204':
+          description: The user has been unbanned successfully.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /users/{username}/stream:
+  /users/{userID}/stream:
     parameters:
-    - { $ref: "#/components/parameters/username" }
+    - { $ref: "#/components/parameters/userID" }
     get:
       parameters:
         - { $ref: "#/components/parameters/paginationIndex" }
       tags: ["Stream"]
+      operationId: getMyStream
+      security:
+        - BearerAuth: []
       summary: Returns the photo stream via a pagination index
       description: |
         Given a user identifier a stream of photos (images)
@@ -372,11 +452,10 @@ paths:
         Each response contains the 10 most recent photos.
         To get more images, you must increment the
         "paginationIndex" parameter by 1 and so on until
-        the give "paginationLimit".
+        the given "paginationLimit".
 
         If the requested userID does not exist, or the "paginationIndex"
         is bigger than "paginationLimit" an error will be returned.
-      operationId: getMyStream
       responses:
         "200":
           description: The user is found and the stream is the content.
@@ -393,57 +472,64 @@ paths:
                     type: integer
                     minimum: 0
                     example: 4
-        "400":
-          description: |
-            The request is not valid. Check your syntax and that
-            paginationIndex is less or equal of paginationLimit
-        "404":
-          description: No user found for the required username.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
   /photos/:
     post:
-      parameters:
-        - { $ref: "#/components/parameters/userID" }
       tags: ["Photos"]
+      operationId: uploadPhoto
+      security:
+        - BearerAuth: []
       summary: Upload a photo
       description: |
         This endpoint is used to upload a photo.
         If an error occurs, a error is returned.
-      operationId: uploadPhoto
       requestBody:
         content:
-          image/png:
+          multipart/form-data:
             schema:
-              type: string
-              format: binary
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: The photo to be uploaded.
+                uploader:
+                  { $ref: "#/components/schemas/UUID" }
       responses:
-        "201":
-          description: Photo successfully uploaded, url in the content
+        '201':
+          description: Photo successfully uploaded, photo id in the content
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  url:
-                    { $ref: "#/components/schemas/PhotoURL" }
-        "400":
-          description: An error as occurred. Check image format.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: The file is not an image.
+                  photoID:
+                    { $ref: "#/components/schemas/ResourceID" }
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
   /photos/{photoID}:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
     delete:
       tags: ["Photos"]
-      parameters:
-          - { $ref: "#/components/parameters/userID" }
       operationId: deletePhoto
+      security:
+        - BearerAuth: []
       summary: Delete a photo
       description: |
         This endpoint allows the user to delete
@@ -451,48 +537,58 @@ paths:
       responses:
         "204":
           description: The photo has been deleted successfully.
-        "404":
-          description: Photo not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /photos/{photoID}/likes/:
+
+  /photos/{photoID}/likes/{userID}:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
       - { $ref: "#/components/parameters/userID" }
     put:
       tags: ["Photos"]
       operationId: likePhoto
+      security:
+        - BearerAuth: []
       summary: Like a photo
       description: This endpoint is used to like a photo
       responses:
         "201":
           description: Like has been added.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  likeID:
-                    { $ref: "#/components/schemas/ResourceID" }
-        "404":
-          description: Photo not found.
-
-  /photos/{photoID}/likes/{likeID}:
-    parameters:
-      - { $ref: "#/components/parameters/likeID" }
-      - { $ref: "#/components/parameters/photoID" }
-      - { $ref: "#/components/parameters/userID" }
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags: ["Photos"]
       operationId: unlikePhoto
+      security:
+        - BearerAuth: []
       summary: Unlike a photo
       description: |
         This endpoint is used to remove the
         like from a photo.
       responses:
-        "204":
+        '204':
           description: The like has been removed.
-        "404":
-          description: Photo not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
   /photos/{photoID}/comments/:
     parameters:
@@ -501,11 +597,13 @@ paths:
       tags: ["Photos"]
       summary: Get photo comments
       operationId: getPhotoComments
+      security:
+        - BearerAuth: []
       description: |
         This endpoint is used to get the
         comments on a photo.
       responses:
-        "200":
+        '200':
           description: Photo found and comments in content
           content:
             application/json:
@@ -516,15 +614,28 @@ paths:
                     type: array
                     items:
                       { $ref: "#/components/schemas/PhotoComment" }
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
+
+  /photos/{photoID}/comments/{userID}:
+    parameters:
+      - { $ref: "#/components/parameters/photoID" }
+      - { $ref: "#/components/parameters/userID" }
     post:
-      parameters:
-        - { $ref: "#/components/parameters/userID" }
       tags: ["Photos"]
       operationId: commentPhoto
+      security:
+        - BearerAuth: []
       summary: Add a comment
       description: |
-        This endpoint is used to leave
-        a comment on a photo
+        This endpoint is used to
+        comment a photo
       requestBody:
         required: true
         content:
@@ -535,7 +646,7 @@ paths:
                 text:
                   { $ref: "#/components/schemas/CommentText"}
       responses:
-        "201":
+        '201':
           description: Comment created; details in content.
           content:
             application/json:
@@ -544,24 +655,41 @@ paths:
                 properties:
                   id:
                     { $ref: "#/components/schemas/ResourceID" }
+                  date:
+                    { $ref: "#/components/schemas/Date" }
                   text:
                     { $ref: "#/components/schemas/CommentText"}
-        "404":
-          description: Photo not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
 
-  /photos/{photoID}/comments/{commentID}:
+  /photos/{photoID}/comments/{userID}/{commentID}:
     parameters:
       - { $ref: "#/components/parameters/commentID" }
+      - { $ref: "#/components/parameters/photoID" }
       - { $ref: "#/components/parameters/userID" }
     delete:
       tags: ["Photos"]
       operationId: uncommentPhoto
+      security:
+        - BearerAuth: []
       summary: Delete a comment
       description: |
         This endpoint is used to remove
         a comment from a photo.
       responses:
-        "204":
+        '204':
           description: Comment deleted.
-        "404":
-          description: Photo not found.
+        '400':
+          $ref: "#/components/responses/BadRequest"
+        '401':
+          $ref: "#/components/responses/Unauthorized"
+        '403':
+          $ref: "#/components/responses/Forbidden"
+        '500':
+          $ref: "#/components/responses/InternalServerError"
