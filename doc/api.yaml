@@ -62,7 +62,7 @@ components:
     ResourceCount:
       description: Simple resource counter.
       type: integer
-      min: 0
+      minimum: 0
       example: 42
       readOnly: true
 
