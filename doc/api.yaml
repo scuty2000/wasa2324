@@ -12,6 +12,16 @@ servers:
   - url: wasadev.lucascutigliani.it
     description: Development URL
 
+tags:
+  - name: Login
+    description: Paths for authentication
+  - name: Users
+    description: Path for operations on user data
+  - name: Follows
+    description: Paths for operations regarding following/unfollowing
+  - name: Photos
+    description: Paths for operations regarding photos
+
 components:
   securitySchemes:
     BearerAuth:
@@ -24,6 +34,7 @@ components:
     # Auth
 
     AuthResponse:
+      description: Schema for the the response on auth.
       type: object
       properties:
         identifier:
@@ -34,7 +45,7 @@ components:
 
     BearerToken:
       description: |
-        Token used to fullfil the Bearer Authentication
+        Token used to fullfil the Bearer Authentication.
         standard.
       type: string
       pattern: ^Bearer\s[A-Za-z0-9-._~+/]+={0,2}$
@@ -91,6 +102,9 @@ components:
         photosCount:
           { $ref: "#/components/schemas/ResourceCount" }
         isBanned:
+          description: |
+            Flag indicating if this user has been banned
+            by the user receiving the object.
           readOnly: true
           type: boolean
       readOnly: true
@@ -99,12 +113,15 @@ components:
       description: Name of the user.
       type: string
       example: maria00
+      pattern: '^[a-zA-Z0-9_]*$'
       maxLength: 16
       minLength: 3
 
     UsersList:
-      description: List of users
+      description: List of users.
       type: array
+      minItems: 0
+      maxItems: 20
       items:
         { $ref: "#/components/schemas/User" }
       readOnly: true
@@ -131,19 +148,25 @@ components:
         date:
           { $ref: "#/components/schemas/Date" }
         likesCount:
+          description: Counter for photo likes.
           type: integer
           minimum: 0
           example: 42
         commentsCount:
+          description: Counter for photo comments.
           type: integer
           minimum: 0
           example: 42
         liked:
+          description: |
+            Flag indicating if the requesting user has
+            liked the photo.
           type: boolean
           example: false
       readOnly: true
 
     PhotoURL:
+      description: Components representing the url of an uploaded photo.
       readOnly: true
       type: string
       pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
@@ -173,6 +196,8 @@ components:
       description: Simple comment text representation.
       type: string
       minLength: 1
+      maxLength: 250
+      pattern: '^.*$'
       example: Nice photo bro!
 
     # Misc
@@ -226,6 +251,7 @@ components:
       content:
         text/plain:
           schema:
+            description: Specific error message for error 400.
             type: string
             example: |
               Bad Request: Syntax error in the request.
@@ -236,6 +262,7 @@ components:
       content:
         text/plain:
           schema:
+            description: Specific error message for error 401.
             type: string
             example: |
               Unauthorized: Authentication failed or not provided.
@@ -246,6 +273,7 @@ components:
       content:
         text/plain:
           schema:
+            description: Specific error message for error 403.
             type: string
             example: |
              Forbidden: Insufficient permissions to perform
@@ -259,6 +287,7 @@ components:
       content:
         text/plain:
           schema:
+            description: Specific error message for error 404.
             type: string
             example: |
               Not Found: The requested resource was not found.
@@ -269,6 +298,7 @@ components:
       content:
         text/plain:
           schema:
+            description: Specific error message for error 500.
             type: string
             example: |
               Internal Server Error: A generic error
@@ -294,6 +324,7 @@ paths:
         content:
           application/json:
             schema:
+              description: Login credentials.
               type: object
               properties:
                 name:
@@ -304,23 +335,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  identifier:
-                    { $ref: "#/components/schemas/UUID" }
-                  token:
-                    { $ref: "#/components/schemas/BearerToken" }
+                { $ref: "#/components/schemas/AuthResponse" }
         '201':
           description: User log-in action successful (user created)
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  identifier:
-                    { $ref: "#/components/schemas/UUID" }
-                  token:
-                    { $ref: "#/components/schemas/BearerToken" }
+                { $ref: "#/components/schemas/AuthResponse" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '500':
@@ -344,6 +365,10 @@ paths:
         Given a partial username (search query)
         a list of possible matches is returned
         in the response.
+
+        Will be returned at maximum 20 users
+        that match the query, sorted by descending
+        on the edit distance from the query.
       responses:
         '200':
           description: |
@@ -355,6 +380,7 @@ paths:
           content:
             application/json:
               schema:
+                description: Array of users matching the search query.
                 type: object
                 properties:
                   users:
@@ -420,6 +446,7 @@ paths:
         content:
           application/json:
             schema:
+              description: The changed username.
               type: object
               properties:
                 username:
@@ -504,7 +531,7 @@ paths:
     parameters:
     - { $ref: "#/components/parameters/userID" }
     get:
-      tags: ["Users"]
+      tags: ["Follows"]
       operationId: getFollowers
       security:
         - BearerAuth: []
@@ -519,6 +546,7 @@ paths:
             content:
               application/json:
                 schema:
+                  description: Array of users that are following the user
                   type: object
                   properties:
                     followingUsers:
@@ -538,7 +566,7 @@ paths:
     parameters:
     - { $ref: "#/components/parameters/userID" }
     get:
-      tags: ["Users"]
+      tags: ["Follows"]
       operationId: getFollowing
       security:
         - BearerAuth: []
@@ -552,6 +580,7 @@ paths:
             content:
               application/json:
                 schema:
+                  description: Array of following users.
                   type: object
                   properties:
                     followedUsers:
@@ -577,7 +606,7 @@ paths:
       schema:
         { $ref: "#/components/schemas/UUID" }
     put:
-      tags: ["Users"]
+      tags: ["Follows"]
       operationId: followUser
       security:
         - BearerAuth: []
@@ -625,13 +654,13 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /stream/{userID}:
+  /users/{userID}/stream:
     parameters:
     - { $ref: "#/components/parameters/userID" }
     get:
       parameters:
         - { $ref: "#/components/parameters/paginationIndex" }
-      tags: ["Stream"]
+      tags: ["Users"]
       operationId: getMyStream
       security:
         - BearerAuth: []
@@ -653,13 +682,22 @@ paths:
           content:
             application/json:
               schema:
+                description: |
+                  This response contains the photos of the user
+                  stream, paginated.
                 type: object
                 properties:
                   photos:
+                    description: Array of photos.
                     type: array
+                    minItems: 0
+                    maxItems: 10
                     items:
                       { $ref: "#/components/schemas/Photo" }
                   paginationLimit:
+                    description: |
+                      The paginationLimit represents the maximum
+                      value for paginationIndex
                     type: integer
                     minimum: 0
                     example: 4
@@ -694,11 +732,14 @@ paths:
         content:
           multipart/form-data:
             schema:
+              description: Data and details of the photo to be uploaded.
               type: object
               properties:
                 image:
                   type: string
                   format: binary
+                  minLength: 0
+                  maxLength: 25000000
                   description: The photo to be uploaded.
                 uploader:
                   { $ref: "#/components/schemas/UUID" }
@@ -814,6 +855,8 @@ paths:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
     get:
+      parameters:
+        - { $ref: "#/components/parameters/paginationIndex" }
       tags: ["Photos"]
       summary: Get photo comments
       operationId: getPhotoComments
@@ -822,18 +865,35 @@ paths:
       description: |
         This endpoint is used to get the
         comments on a photo.
+
+        Each response contains the 10 oldest comments.
+        To get more comments, you must increment the
+        "paginationIndex" parameter by 1 and so on until
+        the given "paginationLimit".
       responses:
         '200':
           description: Photo found and comments in content
           content:
             application/json:
               schema:
+                description: |
+                  Comments of the required photo.
                 type: object
                 properties:
                   comments:
+                    description: Array of comments.
                     type: array
+                    minItems: 0
+                    maxItems: 10
                     items:
                       { $ref: "#/components/schemas/PhotoComment" }
+                  paginationLimit:
+                    description: |
+                      The paginationLimit represents the maximum
+                      value for paginationIndex.
+                    type: integer
+                    minimum: 0
+                    example: 4
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -842,16 +902,11 @@ paths:
           { $ref: "#/components/responses/Forbidden" }
         '500':
           { $ref: "#/components/responses/InternalServerError" }
-
-  /photos/{photoID}/comments/{userID}:
-    parameters:
-      - { $ref: "#/components/parameters/photoID" }
-      - { $ref: "#/components/parameters/userID" }
     post:
-      tags: ["Photos"]
+      tags: [ "Photos" ]
       operationId: commentPhoto
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       summary: Add a comment
       description: |
         This endpoint is used to
@@ -861,16 +916,20 @@ paths:
         content:
           application/json:
             schema:
+              description: Details of the comment to create.
               type: object
               properties:
                 text:
-                  { $ref: "#/components/schemas/CommentText"}
+                  { $ref: "#/components/schemas/CommentText" }
+                issuer:
+                  { $ref: "#/components/schemas/UUID" }
       responses:
         '201':
           description: Comment created; details in content.
           content:
             application/json:
               schema:
+                description: Details of the created comment.
                 type: object
                 properties:
                   id:
@@ -878,7 +937,7 @@ paths:
                   date:
                     { $ref: "#/components/schemas/Date" }
                   text:
-                    { $ref: "#/components/schemas/CommentText"}
+                    { $ref: "#/components/schemas/CommentText" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -890,12 +949,18 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /photos/{photoID}/comments/{userID}/{commentID}:
+  /photos/{photoID}/comments/{commentID}:
     parameters:
       - { $ref: "#/components/parameters/commentID" }
       - { $ref: "#/components/parameters/photoID" }
-      - { $ref: "#/components/parameters/userID" }
     delete:
+      parameters:
+        - name: userID
+          in: header
+          required: true
+          description: UUID of the requesting user
+          schema:
+            { $ref: "#/components/schemas/UUID" }
       tags: ["Photos"]
       operationId: uncommentPhoto
       security:
