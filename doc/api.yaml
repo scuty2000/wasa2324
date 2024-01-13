@@ -7,9 +7,9 @@ info:
   version: 1.0.0
 
 servers:
-  - url: wasaphoto.lucascutigliani.it
+  - url: https://wasaphoto.lucascutigliani.it
     description: Production URL
-  - url: wasadev.lucascutigliani.it
+  - url: https://wasadev.lucascutigliani.it
     description: Development URL
 
 tags:
