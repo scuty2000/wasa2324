@@ -8,10 +8,12 @@ log:
 #  destination: stderr
 #  file: /tmp/debug.log
 #  combinedtostdout: true
-#web:
-#  apihost: 0.0.0.0:3000
-#  debughost: 0.0.0.0:4000
-#  readtimeout: 5s
-#  writetimeout: 5s
-#  shutdowntimeout: 5s
-#  behindproxy: false
+web:
+  apihost: 0.0.0.0:3000
+  debughost: 0.0.0.0:4000
+  readtimeout: 5s
+  writetimeout: 5s
+  shutdowntimeout: 5s
+  behindproxy: false
+db:
+  filename: "./wasadev.db"
