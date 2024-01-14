@@ -12,7 +12,7 @@ func (db *appdbimpl) CreateUser(username string) (string, error) {
 	for db.checkCollision(identifier) {
 		identifier = uuid.New().String()
 	}
-	err = db.c.QueryRow("INSERT INTO Users (UUID, USERNAME) VALUES (?, ?)", identifier, username).Scan()
+	_, err = db.c.Exec("INSERT INTO Users (UUID, USERNAME) VALUES (?, ?)", identifier, username)
 	return identifier, err
 }
 
