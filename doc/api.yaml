@@ -244,6 +244,14 @@ components:
       schema:
         { $ref: "#/components/schemas/ResourceID" }
 
+    X-Requesting-User-UUID:
+      name: X-Requesting-User-UUID
+      in: header
+      required: true
+      description: UUID of the requesting user.
+      schema:
+        { $ref: "#/components/schemas/UUID" }
+
   responses:
     BadRequest:
       description: |
@@ -390,7 +398,8 @@ paths:
 
   /users/{userID}:
     parameters:
-    - {$ref: "#/components/parameters/userID"}
+    - { $ref: "#/components/parameters/userID" }
+    - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
     get:
       tags: ["Users"]
       operationId: getUserProfile
