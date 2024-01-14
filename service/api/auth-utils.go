@@ -32,6 +32,7 @@ func AuthUser(rt *_router, ctx reqcontext.RequestContext, username string) (stri
 			return "", "", false, err
 		}
 		created = true
+		ctx.Logger.Info("Created user ", username)
 	}
 
 	return token, uuid, created, nil
