@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
+	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/utils"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"net/http"
@@ -98,7 +99,7 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	bearer, uuid, created, err := AuthUser(rt, ctx, username)
+	bearer, uuid, created, err := utils.AuthUser(rt.db, ctx, username)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Error generating bearer token")
 		w.Header().Set("content-type", "text/plain")

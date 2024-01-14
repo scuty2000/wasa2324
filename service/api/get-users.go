@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/mocks"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/utils"
@@ -66,18 +65,21 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 	if searchQuery == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery not provided."))
+		ctx.Logger.Error("searchQuery not provided")
 		return
 	}
 
 	if len(searchQuery) > 16 {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery too long."))
+		ctx.Logger.Error("searchQuery too long")
 		return
 	}
 
 	if len(searchQuery) < 3 {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery too short."))
+		ctx.Logger.Error("searchQuery too short")
 		return
 	}
 
@@ -85,6 +87,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("Internal Server Error: " + err.Error()))
+		ctx.Logger.WithError(err).Error("Error searching users")
 		return
 	}
 
@@ -100,10 +103,6 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Distance < results[j].Distance
 	})
-
-	for _, result := range results {
-		fmt.Printf("UUID: %s, Username: %s, Distance: %d\n", result.Uuid, result.Username, result.Distance)
-	}
 
 	users := make([]mocks.User, len(results))
 	for i := 0; i < 20 && i < len(results); i++ {

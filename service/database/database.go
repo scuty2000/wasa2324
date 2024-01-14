@@ -43,6 +43,8 @@ type AppDatabase interface {
 	CreateUser(username string) (string, error)
 	SearchUsers(searchQuery string) ([][]string, error)
 	GetUserSession(uuid string) (string, error)
+	SetSession(uuid string, bearer string) error
+	GetUserBans(uuid string) ([]string, error)
 
 	Ping() error
 }
@@ -62,15 +64,25 @@ func New(db *sql.DB) (AppDatabase, error) {
 	var tableName string
 	err := db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Users';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE Users (UUID BINARY(16) NOT NULL PRIMARY KEY, USERNAME VARCHAR(16));`
+		sqlStmt := `CREATE TABLE Users (UUID CHAR(36) NOT NULL PRIMARY KEY, USERNAME VARCHAR(16) NOT NULL);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
 		}
 	}
+
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Auth';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE Auth (UUID BINARY(16) NOT NULL PRIMARY KEY, BEARER_TOKEN TEXT);`
+		sqlStmt := `CREATE TABLE Auth (UUID CHAR(36) NOT NULL PRIMARY KEY, BEARER_TOKEN TEXT NOT NULL);`
+		_, err = db.Exec(sqlStmt)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: %w", err)
+		}
+	}
+
+	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Bans';`).Scan(&tableName)
+	if errors.Is(err, sql.ErrNoRows) {
+		sqlStmt := `CREATE TABLE Bans (UUID CHAR(36) NOT NULL PRIMARY KEY, BANNED_UUID CHAR(36) NOT NULL);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
