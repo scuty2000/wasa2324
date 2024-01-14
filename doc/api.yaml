@@ -347,7 +347,7 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /users/:
+  /users:
     parameters:
     - name: searchQuery
       in: query
@@ -358,8 +358,6 @@ paths:
     get:
       tags: ["Users"]
       operationId: searchUsers
-      security:
-        - BearerAuth: []
       summary: Search user by partial username
       description: |
         Given a partial username (search query)
@@ -712,7 +710,7 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /photos/:
+  /photos:
     post:
       tags: ["Photos"]
       operationId: uploadPhoto
@@ -851,7 +849,7 @@ paths:
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
-  /photos/{photoID}/comments/:
+  /photos/{photoID}/comments:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
     get:
