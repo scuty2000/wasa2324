@@ -39,7 +39,10 @@ import (
 // AppDatabase is the high level interface for the DB
 type AppDatabase interface {
 	GetUserByName(username string) (string, error)
+	GetUserByUUID(uuid string) (string, error)
 	CreateUser(username string) (string, error)
+	SearchUsers(searchQuery string) ([][]string, error)
+	GetUserSession(uuid string) (string, error)
 
 	Ping() error
 }

@@ -37,3 +37,22 @@ func AuthUser(rt *_router, ctx reqcontext.RequestContext, username string) (stri
 
 	return token, uuid, created, nil
 }
+
+func ValidateBearer(rt *_router, ctx reqcontext.RequestContext, uuid string, bearer string) (bool, error) {
+	var token string
+	var err error
+	token, err = rt.db.GetUserSession(uuid)
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			ctx.Logger.WithError(err).Error("Error getting bearer token")
+			return false, err
+		}
+		ctx.Logger.WithError(errors.New("bearer token not found")).Error("Error getting bearer token")
+		return false, nil
+	}
+	if token != bearer {
+		ctx.Logger.WithError(errors.New("bearer token not matching")).Error("Bearer token not matching")
+		return false, nil
+	}
+	return true, nil
+}
