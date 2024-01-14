@@ -11,7 +11,7 @@ import (
 
 func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
-	requestingUUID := r.Header.Get("userID")
+	requestingUUID := r.Header.Get("X-Requesting-User-UUID")
 	if requestingUUID == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: requesting userID not provided in header."))
