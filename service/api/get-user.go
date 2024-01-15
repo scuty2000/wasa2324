@@ -1,7 +1,9 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
 	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/utils"
@@ -13,6 +15,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	requestingUUID := r.Header.Get("X-Requesting-User-UUID")
 	if requestingUUID == "" {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: requesting userID not provided in header."))
 		return
@@ -20,12 +23,14 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	bearer := r.Header.Get("Authorization")
 	if bearer == "" {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication not provided."))
 		return
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
 		ctx.Logger.WithError(err).Error("Error validating bearer token")
@@ -33,6 +38,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	if !valid {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		ctx.Logger.Error("Authentication has failed")
@@ -40,8 +46,20 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	requiredUUID := ps.ByName("userID")
+
+	_, err = rt.db.GetUserByUUID(requiredUUID)
+	if err != nil {
+		if errors.Is(sql.ErrNoRows, err) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusNotFound)
+			_, _ = w.Write([]byte("Not Found: User not found."))
+			return
+		}
+	}
+
 	hasPermission, err := utils.CheckUserAccess(rt.db, ctx, requestingUUID, requiredUUID)
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
 		ctx.Logger.WithError(err).Error("Error checking user access")
@@ -49,6 +67,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	if !hasPermission {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusForbidden)
 		_, _ = w.Write([]byte("Forbidden: Insufficient permissions to perform this action. You may have tried to perform an operation on another user data or tried to retrieve data from a user that banned you."))
 		return
@@ -56,6 +75,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	user, err := utils.MakeUserFromUUID(rt.db, requiredUUID)
 	if err != nil {
+		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
 		ctx.Logger.WithError(err).Error("Error getting user")

@@ -45,6 +45,7 @@ type AppDatabase interface {
 	GetUserSession(uuid string) (string, error)
 	SetSession(uuid string, bearer string) error
 	GetUserBans(uuid string) ([]string, error)
+	UpdateUsername(uuid string, username string) error
 
 	Ping() error
 }
