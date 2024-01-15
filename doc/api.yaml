@@ -284,10 +284,10 @@ components:
             description: Specific error message for error 403.
             type: string
             example: |
-             Forbidden: Insufficient permissions to perform
-             this action. You may have tried to perform an
-             operation on another user data or tried to
-             retrieve data from a user that banned you.
+              Forbidden: Insufficient permissions to perform
+              this action. You may have tried to perform an
+              operation on another user data or tried to
+              retrieve data from a user that banned you.
     NotFound:
       description: |
         Not Found. The requested resource could
@@ -357,12 +357,12 @@ paths:
 
   /users:
     parameters:
-    - name: searchQuery
-      in: query
-      required: true
-      description: Partial username search query.
-      schema:
-        { $ref: "#/components/schemas/Username" }
+      - name: searchQuery
+        in: query
+        required: true
+        description: Partial username search query.
+        schema:
+          { $ref: "#/components/schemas/Username" }
     get:
       tags: ["Users"]
       operationId: searchUsers
@@ -398,8 +398,8 @@ paths:
 
   /users/{userID}:
     parameters:
-    - { $ref: "#/components/parameters/userID" }
-    - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
+      - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
     get:
       tags: ["Users"]
       operationId: getUserProfile
@@ -434,7 +434,8 @@ paths:
 
   /users/{userID}/username:
     parameters:
-    - {$ref: "#/components/parameters/userID"}
+      - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
     put:
       tags: ["Users"]
       operationId: setMyUserName
@@ -466,8 +467,6 @@ paths:
           { $ref: "#/components/responses/Unauthorized" }
         '403':
           { $ref: "#/components/responses/Forbidden" }
-        '404':
-          { $ref: "#/components/responses/NotFound" }
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
@@ -534,7 +533,7 @@ paths:
 
   /users/{userID}/followers:
     parameters:
-    - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/userID" }
     get:
       tags: ["Follows"]
       operationId: getFollowers
@@ -547,15 +546,15 @@ paths:
         the user.
       responses:
         '200':
-            description: User found and followers list in content.
-            content:
-              application/json:
-                schema:
-                  description: Array of users that are following the user
-                  type: object
-                  properties:
-                    followingUsers:
-                      { $ref: "#/components/schemas/UsersList" }
+          description: User found and followers list in content.
+          content:
+            application/json:
+              schema:
+                description: Array of users that are following the user
+                type: object
+                properties:
+                  followingUsers:
+                    { $ref: "#/components/schemas/UsersList" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -569,7 +568,7 @@ paths:
 
   /users/{userID}/following:
     parameters:
-    - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/userID" }
     get:
       tags: ["Follows"]
       operationId: getFollowing
@@ -581,15 +580,15 @@ paths:
         list of users the user is following.
       responses:
         '200':
-            description: User found and following list in content.
-            content:
-              application/json:
-                schema:
-                  description: Array of following users.
-                  type: object
-                  properties:
-                    followedUsers:
-                      { $ref: "#/components/schemas/UsersList" }
+          description: User found and following list in content.
+          content:
+            application/json:
+              schema:
+                description: Array of following users.
+                type: object
+                properties:
+                  followedUsers:
+                    { $ref: "#/components/schemas/UsersList" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -603,13 +602,13 @@ paths:
 
   /users/{userID}/following/{followedID}:
     parameters:
-    - { $ref: "#/components/parameters/userID" }
-    - name: followedID
-      in: path
-      description: ID of the followed user
-      required: true
-      schema:
-        { $ref: "#/components/schemas/UUID" }
+      - { $ref: "#/components/parameters/userID" }
+      - name: followedID
+        in: path
+        description: ID of the followed user
+        required: true
+        schema:
+          { $ref: "#/components/schemas/UUID" }
     put:
       tags: ["Follows"]
       operationId: followUser
@@ -661,7 +660,7 @@ paths:
 
   /users/{userID}/stream:
     parameters:
-    - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/userID" }
     get:
       parameters:
         - { $ref: "#/components/parameters/paginationIndex" }
@@ -785,7 +784,7 @@ paths:
         required: true
         description: User UUID
         schema:
-            { $ref: "#/components/schemas/UUID" }
+          { $ref: "#/components/schemas/UUID" }
     delete:
       tags: ["Photos"]
       operationId: deletePhoto
