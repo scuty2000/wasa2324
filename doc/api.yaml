@@ -142,7 +142,7 @@ components:
       type: object
       properties:
         id:
-          { $ref: "#/components/schemas/ResourceID" }
+          { $ref: "#/components/schemas/UUID" }
         author:
           { $ref: "#/components/schemas/UUID" }
         date:
@@ -169,8 +169,8 @@ components:
       description: Components representing the url of an uploaded photo.
       readOnly: true
       type: string
-      pattern: '^https?:\/\/.*\/.*\.(png|gif|webp|jpeg|jpg)\??.*$'
-      example: https://wasaphoto.lucascutigliani.it/uploads/1234.png
+      pattern: '^/uploads/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\.(png|jpg)$'
+      example: "/uploads/e5f04445-2f4a-4e14-a8fb-5d7f84221096/9f70128d-8cf0-3892-9e51-3980525107a5.png"
 
     PhotoComment:
       description: |
@@ -207,6 +207,7 @@ components:
       type: string
       format: date-time
       readOnly: true
+      example: 2024-01-16 17:49:43.640624
 
   parameters:
 
@@ -234,7 +235,7 @@ components:
       required: true
       description: Photo identifier parameter.
       schema:
-        { $ref: "#/components/schemas/ResourceID" }
+        { $ref: "#/components/schemas/UUID" }
 
     commentID:
       name: commentID
@@ -703,6 +704,8 @@ paths:
           { $ref: "#/components/responses/InternalServerError" }
 
   /photos:
+    parameters:
+      - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
     post:
       tags: ["Photos"]
       operationId: uploadPhoto
@@ -712,6 +715,7 @@ paths:
       description: |
         This endpoint is used to upload a photo.
         If an error occurs, a error is returned.
+      x-codegen-request-body-name: photoUpload
       requestBody:
         required: true
         description: |
@@ -720,19 +724,29 @@ paths:
           in binary format and the UUID of the
           user uploading the photo.
         content:
-          multipart/form-data:
+          image/*:
             schema:
-              description: Data and details of the photo to be uploaded.
-              type: object
-              properties:
-                image:
-                  type: string
-                  format: binary
-                  minLength: 0
-                  maxLength: 25000000
-                  description: The photo to be uploaded.
-                uploader:
-                  { $ref: "#/components/schemas/UUID" }
+              description: |
+                To calculate max/min length for the image
+                we can approximate the maximum teorical
+                dimension for the most lossless format
+                we will accept (in this case PNG).
+                In this case, we can assume that we want
+                only images that are smaller than 4032x4032
+                pixels, thus leading us to this calculation
+
+                4032 pixel x 4032 pixel x 4 byte/pixel = around 65 MB
+
+                With this in mind, we can safely say that all
+                the images the we will receive will be smaller
+                than 65.000.000 bytes.
+
+                We will set a 100 bytes minimum length to ensure
+                that data is present.
+              type: string
+              format: binary
+              minLength: 100
+              maxLength: 65000000
       responses:
         '201':
           description: Photo successfully uploaded, photo id in the content
@@ -750,7 +764,7 @@ paths:
                 type: object
                 properties:
                   photoID:
-                    { $ref: "#/components/schemas/ResourceID" }
+                    { $ref: "#/components/schemas/UUID" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -765,12 +779,33 @@ paths:
   /photos/{photoID}:
     parameters:
       - { $ref: "#/components/parameters/photoID" }
-      - name: userID
-        in: header
-        required: true
-        description: User UUID
-        schema:
-          { $ref: "#/components/schemas/UUID" }
+      - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
+    get:
+      tags: ["Photos"]
+      operationId: getPhoto
+      security:
+        - BearerAuth: []
+      summary: Get photo info
+      description: |
+        This endpoint is used to get
+        infos about a photo.
+      responses:
+        '200':
+          description: The photo has been deleted successfully.
+          content:
+            application/json:
+              schema:
+                { $ref: "#/components/schemas/Photo" }
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
     delete:
       tags: ["Photos"]
       operationId: deletePhoto
