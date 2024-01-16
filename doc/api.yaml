@@ -759,12 +759,7 @@ paths:
           content:
             application/json:
               schema:
-                description: |
-                  ID assigned to the uploaded photo
-                type: object
-                properties:
-                  photoID:
-                    { $ref: "#/components/schemas/UUID" }
+                { $ref: "#/components/schemas/Photo" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
         '401':
@@ -791,7 +786,7 @@ paths:
         infos about a photo.
       responses:
         '200':
-          description: The photo has been deleted successfully.
+          description: Photo info in the content.
           content:
             application/json:
               schema:
