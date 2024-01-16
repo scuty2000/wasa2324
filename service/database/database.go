@@ -46,6 +46,7 @@ type AppDatabase interface {
 	SetSession(uuid string, bearer string) error
 	GetUserBans(uuid string) ([]string, error)
 	UpdateUsername(uuid string, username string) error
+	SetUserBan(uuid string, bannedUUID string) error
 
 	Ping() error
 }
@@ -83,7 +84,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Bans';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE Bans (UUID CHAR(36) NOT NULL PRIMARY KEY, BANNED_UUID CHAR(36) NOT NULL);`
+		sqlStmt := `CREATE TABLE Bans (UUID CHAR(36) NOT NULL, BANNED_UUID CHAR(36) NOT NULL, PRIMARY KEY (UUID, BANNED_UUID));`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)

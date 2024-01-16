@@ -14,12 +14,6 @@ import (
 
 func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	requiredUUID := ps.ByName("userID")
-	requestingUUID := r.Header.Get("X-Requesting-User-UUID")
-	if requestingUUID == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Bad Request: requesting userID not provided in header."))
-		return
-	}
 
 	bearer := r.Header.Get("Authorization")
 	if bearer == "" {
@@ -27,7 +21,7 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 		_, _ = w.Write([]byte("Unauthorized: Authentication not provided."))
 		return
 	}
-	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
+	valid, err := utils.ValidateBearer(rt.db, ctx, requiredUUID, bearer)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -39,12 +33,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 		ctx.Logger.Error("Authentication has failed")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		return
-	}
-
-	if requestingUUID != requiredUUID {
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = w.Write([]byte("Forbidden: You cannot change another user's username."))
 		return
 	}
 
