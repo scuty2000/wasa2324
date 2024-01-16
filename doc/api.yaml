@@ -499,10 +499,6 @@ paths:
           { $ref: "#/components/responses/BadRequest" }
         '401':
           { $ref: "#/components/responses/Unauthorized" }
-        '403':
-          { $ref: "#/components/responses/Forbidden" }
-        '404':
-          { $ref: "#/components/responses/NotFound" }
         '500':
           { $ref: "#/components/responses/InternalServerError" }
     delete:
@@ -521,12 +517,15 @@ paths:
           { $ref: "#/components/responses/BadRequest" }
         '401':
           { $ref: "#/components/responses/Unauthorized" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
         '500':
           { $ref: "#/components/responses/InternalServerError" }
 
   /users/{userID}/followers:
     parameters:
       - { $ref: "#/components/parameters/userID" }
+      - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
     get:
       tags: ["Follows"]
       operationId: getFollowers
@@ -546,7 +545,7 @@ paths:
                 description: Array of users that are following the user
                 type: object
                 properties:
-                  followingUsers:
+                  followers:
                     { $ref: "#/components/schemas/UsersList" }
         '400':
           { $ref: "#/components/responses/BadRequest" }
@@ -620,14 +619,10 @@ paths:
           { $ref: "#/components/responses/BadRequest" }
         '401':
           { $ref: "#/components/responses/Unauthorized" }
-        '403':
-          { $ref: "#/components/responses/Forbidden" }
-        '404':
-          { $ref: "#/components/responses/NotFound" }
         '500':
           { $ref: "#/components/responses/InternalServerError" }
     delete:
-      tags: ["Users"]
+      tags: ["Follows"]
       operationId: unfollowUser
       security:
         - BearerAuth: []
@@ -644,8 +639,6 @@ paths:
           { $ref: "#/components/responses/BadRequest" }
         '401':
           { $ref: "#/components/responses/Unauthorized" }
-        '403':
-          { $ref: "#/components/responses/Forbidden" }
         '404':
           { $ref: "#/components/responses/NotFound" }
         '500':
@@ -657,7 +650,7 @@ paths:
     get:
       parameters:
         - { $ref: "#/components/parameters/paginationIndex" }
-      tags: ["Users"]
+      tags: ["Photos"]
       operationId: getMyStream
       security:
         - BearerAuth: []
