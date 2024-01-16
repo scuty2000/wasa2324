@@ -48,6 +48,10 @@ type AppDatabase interface {
 	UpdateUsername(uuid string, username string) error
 	SetUserBan(uuid string, bannedUUID string) error
 	DeleteUserBan(uuid string, bannedUUID string) error
+	SetUserFollow(uuid string, followedUUID string) error
+	DeleteUserFollow(uuid string, followedUUID string) error
+	GetUserFollows(uuid string) ([]string, error)
+	GetUserFollowers(uuid string) ([]string, error)
 
 	Ping() error
 }
@@ -86,6 +90,15 @@ func New(db *sql.DB) (AppDatabase, error) {
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Bans';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
 		sqlStmt := `CREATE TABLE Bans (UUID CHAR(36) NOT NULL, BANNED_UUID CHAR(36) NOT NULL, PRIMARY KEY (UUID, BANNED_UUID));`
+		_, err = db.Exec(sqlStmt)
+		if err != nil {
+			return nil, fmt.Errorf("error creating database structure: %w", err)
+		}
+	}
+
+	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Follows';`).Scan(&tableName)
+	if errors.Is(err, sql.ErrNoRows) {
+		sqlStmt := `CREATE TABLE Follows (UUID CHAR(36) NOT NULL, FOLLOWED_UUID CHAR(36) NOT NULL, PRIMARY KEY (UUID, FOLLOWED_UUID));`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)
