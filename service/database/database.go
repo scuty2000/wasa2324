@@ -47,6 +47,7 @@ type AppDatabase interface {
 	GetUserBans(uuid string) ([]string, error)
 	UpdateUsername(uuid string, username string) error
 	SetUserBan(uuid string, bannedUUID string) error
+	DeleteUserBan(uuid string, bannedUUID string) error
 
 	Ping() error
 }
