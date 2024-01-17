@@ -34,6 +34,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"lucascutigliani.it/wasa/WasaPhoto/service/mocks"
 )
 
 // AppDatabase is the high level interface for the DB
@@ -60,6 +61,7 @@ type AppDatabase interface {
 	SetComment(ownerUUID string, photoUUID string, commentText string) (string, string, error)
 	DeleteComment(photoUUID string, commentUUID string) (int, error)
 	GetComment(commentUUID string, photoUUID string) (string, string, string, error)
+	GetPhotoComments(photoUUID string) ([]mocks.Comment, error)
 
 	Ping() error
 }

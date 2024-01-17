@@ -48,8 +48,21 @@ func (rt *_router) postComment(w http.ResponseWriter, r *http.Request, ps httpro
 	for k := range jsonMap {
 		keys = append(keys, k)
 	}
-	if len(keys) != 2 || keys[0] != "text" || keys[1] != "issuer" {
-		ctx.Logger.WithError(errors.New("json not conforming to schema")).Error("JSON not conforming to schema")
+	if len(keys) != 2 {
+		w.Header().Set("content-type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode("JSON not conforming to schema")
+		return
+	}
+
+	var hasAllFiels = true
+	for _, key := range keys {
+		if key != "text" && key != "issuer" {
+			hasAllFiels = false
+		}
+	}
+
+	if !hasAllFiels {
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("JSON not conforming to schema")
