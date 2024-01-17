@@ -53,7 +53,7 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	requiredPhotoID := ps.ByName("photoID")
-	ownerUUID, _, _, _, _, err := rt.db.GetPhoto(requiredPhotoID, requestingUUID)
+	ownerUUID, _, _, _, _, _, err := rt.db.GetPhoto(requiredPhotoID, requestingUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.Header().Set("Content-Type", "text/plain")
@@ -125,6 +125,10 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	subset := comments[paginationIndexInt*5 : minInt((paginationIndexInt+1)*5, len(comments))]
+
+	if len(subset) == 0 {
+		subset = []mocks.Comment{}
+	}
 
 	var response CommentsResponse
 	response = CommentsResponse{

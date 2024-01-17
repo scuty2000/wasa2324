@@ -35,7 +35,7 @@ func (rt *_router) putUserLike(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	ownerUUID, _, _, _, _, err := rt.db.GetPhoto(photoUUID, requestingUUID)
+	ownerUUID, _, _, _, _, _, err := rt.db.GetPhoto(photoUUID, requestingUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.Header().Set("Content-Type", "text/plain")

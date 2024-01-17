@@ -36,7 +36,7 @@ func (rt *_router) deletePhoto(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	ownerUUID, _, _, _, _, err := rt.db.GetPhoto(photoUUID, requestingUUID)
+	ownerUUID, _, extension, _, _, _, err := rt.db.GetPhoto(photoUUID, requestingUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
@@ -63,25 +63,13 @@ func (rt *_router) deletePhoto(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	filePath := "./webui/uploads/" + ownerUUID + "/" + photoUUID + ".jpg"
+	filePath := "./webui/uploads/" + ownerUUID + "/" + photoUUID + "." + extension
 	err = os.Remove(filePath)
 	if err != nil {
-		ctx.Logger.WithError(err).Error("Error deleting photo")
-		if errors.Is(err, os.ErrNotExist) {
-			filePath = "./webui/uploads/" + ownerUUID + "/" + photoUUID + ".png"
-			err = os.Remove(filePath)
-			if err != nil {
-				ctx.Logger.WithError(err).Error("Error deleting photo1")
-				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-				return
-			}
-		} else {
-			ctx.Logger.WithError(err).Error("Error deleting photo2")
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-			return
-		}
+		ctx.Logger.WithError(err).Error("Error deleting photo file")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
+		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)

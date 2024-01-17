@@ -97,7 +97,7 @@ func (rt *_router) postComment(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	photoUUID := ps.ByName("photoID")
-	photoOwnerUUID, _, _, _, _, err := rt.db.GetPhoto(photoUUID, issuerUUID)
+	photoOwnerUUID, _, _, _, _, _, err := rt.db.GetPhoto(photoUUID, issuerUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.Header().Set("content-type", "text/plain")

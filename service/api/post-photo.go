@@ -96,7 +96,17 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 		}
 	}
 
-	photoUUID, err := rt.db.SetPhoto(requestingUUID)
+	var extension string
+	if isPNG(data) {
+		extension = "png"
+	} else if isJPEG(data) {
+		extension = "jpg"
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("Invalid image format. Only PNG or JPEG are supported"))
+	}
+
+	photoUUID, err := rt.db.SetPhoto(requestingUUID, extension)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Error setting photo")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -104,17 +114,7 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	var extension string
-	if isPNG(data) {
-		extension = ".png"
-	} else if isJPEG(data) {
-		extension = ".jpg"
-	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("Invalid image format. Only PNG or JPEG are supported"))
-	}
-
-	filePath = filePath + photoUUID + extension
+	filePath = filePath + photoUUID + "." + extension
 
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -144,7 +144,7 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 	responseMap["photoID"] = photoUUID
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Location", "/uploads/"+requestingUUID+"/"+photoUUID+extension)
+	w.Header().Set("Location", "/uploads/"+requestingUUID+"/"+photoUUID+"."+extension)
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(responseMap)
 }

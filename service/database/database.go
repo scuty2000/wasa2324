@@ -53,8 +53,8 @@ type AppDatabase interface {
 	DeleteUserFollow(uuid string, followedUUID string) error
 	GetUserFollows(uuid string) ([]string, error)
 	GetUserFollowers(uuid string) ([]string, error)
-	SetPhoto(ownerUUID string) (string, error)
-	GetPhoto(photoUUID string, requestingUUID string) (string, string, int, int, bool, error)
+	SetPhoto(ownerUUID string, extension string) (string, error)
+	GetPhoto(photoUUID string, requestingUUID string) (string, string, string, int, int, bool, error)
 	DeletePhoto(photoUUID string) error
 	SetUserLike(userUUID string, photoUUID string) error
 	DeleteUserLike(userUUID string, photoUUID string) (int, error)
@@ -62,6 +62,7 @@ type AppDatabase interface {
 	DeleteComment(photoUUID string, commentUUID string) (int, error)
 	GetComment(commentUUID string, photoUUID string) (string, string, string, error)
 	GetPhotoComments(photoUUID string) ([]mocks.Comment, error)
+	GetPaginatedPhotos(requestingUUID string, offsetMultiplier int) ([]mocks.Photo, int, error)
 
 	Ping() error
 }
@@ -117,7 +118,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 
 	err = db.QueryRow(`SELECT name FROM sqlite_master WHERE type='table' AND name='Photos';`).Scan(&tableName)
 	if errors.Is(err, sql.ErrNoRows) {
-		sqlStmt := `CREATE TABLE Photos (UUID CHAR(36) NOT NULL PRIMARY KEY, OWNER_UUID CHAR(36) NOT NULL, DATE DATETIME);`
+		sqlStmt := `CREATE TABLE Photos (UUID CHAR(36) NOT NULL PRIMARY KEY, OWNER_UUID CHAR(36) NOT NULL, DATE DATETIME, EXTENSION VARCHAR(5) CHECK ( EXTENSION IN ('png', 'jpg') ) NOT NULL);`
 		_, err = db.Exec(sqlStmt)
 		if err != nil {
 			return nil, fmt.Errorf("error creating database structure: %w", err)

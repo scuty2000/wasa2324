@@ -47,7 +47,7 @@ func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httproute
 	}
 
 	requiredPhotoID := ps.ByName("photoID")
-	ownerUUID, date, likes, comments, liked, err := rt.db.GetPhoto(requiredPhotoID, requestingUUID)
+	ownerUUID, date, extension, likes, comments, liked, err := rt.db.GetPhoto(requiredPhotoID, requestingUUID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			w.Header().Set("Content-Type", "text/plain")
@@ -66,6 +66,7 @@ func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httproute
 		Uuid:          requiredPhotoID,
 		Author:        ownerUUID,
 		Date:          date,
+		Extension:     extension,
 		LikesCount:    likes,
 		CommentsCount: comments,
 		Liked:         liked,
