@@ -55,6 +55,8 @@ type AppDatabase interface {
 	SetPhoto(ownerUUID string) (string, error)
 	GetPhoto(photoUUID string, requestingUUID string) (string, string, int, int, bool, error)
 	DeletePhoto(photoUUID string) error
+	SetUserLike(userUUID string, photoUUID string) error
+	DeleteUserLike(userUUID string, photoUUID string) (int, error)
 
 	Ping() error
 }
