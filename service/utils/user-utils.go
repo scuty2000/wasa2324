@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/mocks"
+	"lucascutigliani.it/wasa/WasaPhoto/service/database"
+	"lucascutigliani.it/wasa/WasaPhoto/service/mocks"
 )
 
 func MakeUserFromUUID(db database.AppDatabase, uuid string) (*mocks.User, error) {

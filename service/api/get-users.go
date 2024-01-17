@@ -2,10 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/mocks"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/utils"
 	"github.com/julienschmidt/httprouter"
+	"lucascutigliani.it/wasa/WasaPhoto/service/api/reqcontext"
+	"lucascutigliani.it/wasa/WasaPhoto/service/mocks"
+	"lucascutigliani.it/wasa/WasaPhoto/service/utils"
 	"net/http"
 	"sort"
 )

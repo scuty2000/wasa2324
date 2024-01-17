@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/utils"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"log"
+	"lucascutigliani.it/wasa/WasaPhoto/service/api/reqcontext"
+	"lucascutigliani.it/wasa/WasaPhoto/service/utils"
 	"net/http"
 	"os"
 )

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/api/reqcontext"
-	"git.sapienzaapps.it/fantasticcoffee/fantastic-coffee-decaffeinated/service/database"
+	"lucascutigliani.it/wasa/WasaPhoto/service/api/reqcontext"
+	"lucascutigliani.it/wasa/WasaPhoto/service/database"
 )
 
 func AuthUser(db database.AppDatabase, ctx reqcontext.RequestContext, username string) (string, string, bool, error) {
