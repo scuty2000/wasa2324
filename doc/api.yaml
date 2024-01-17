@@ -4,7 +4,7 @@ info:
   description: |-
     This is the documentation for the APIs for the WASAPhoto Project,
     for the accademic year 23/24 by Scutigliani Luca (1914401)
-  version: 1.0.0
+  version: 1.1.0
 
 servers:
   - url: https://wasaphoto.lucascutigliani.it
@@ -147,6 +147,12 @@ components:
           { $ref: "#/components/schemas/UUID" }
         date:
           { $ref: "#/components/schemas/Date" }
+        extension:
+          description: Photo extension (png, jpg)
+          type: string
+          minLength: 3
+          maxLength: 10
+          enum: [png, jpg]
         likesCount:
           description: Counter for photo likes.
           type: integer
@@ -667,6 +673,8 @@ paths:
 
         If the requested userID does not exist, or the "paginationIndex"
         is bigger than "paginationLimit" an error will be returned.
+
+        To get the image, you must visit {baseURL}/uploads/{userID}/{photoID}.{png/jpg}
       responses:
         '200':
           description: The user is found and the stream is the content.
@@ -864,8 +872,6 @@ paths:
           { $ref: "#/components/responses/BadRequest" }
         '401':
           { $ref: "#/components/responses/Unauthorized" }
-        '403':
-          { $ref: "#/components/responses/Forbidden" }
         '404':
           { $ref: "#/components/responses/NotFound" }
         '500':
@@ -876,6 +882,7 @@ paths:
       - { $ref: "#/components/parameters/photoID" }
     get:
       parameters:
+        - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
         - { $ref: "#/components/parameters/paginationIndex" }
       tags: ["Photos"]
       summary: Get photo comments
@@ -886,7 +893,7 @@ paths:
         This endpoint is used to get the
         comments on a photo.
 
-        Each response contains the 10 oldest comments.
+        Each response contains the 5 oldest comments.
         To get more comments, you must increment the
         "paginationIndex" parameter by 1 and so on until
         the given "paginationLimit".
@@ -975,12 +982,7 @@ paths:
       - { $ref: "#/components/parameters/photoID" }
     delete:
       parameters:
-        - name: userID
-          in: header
-          required: true
-          description: UUID of the requesting user
-          schema:
-            { $ref: "#/components/schemas/UUID" }
+        - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
       tags: ["Photos"]
       operationId: uncommentPhoto
       security:
