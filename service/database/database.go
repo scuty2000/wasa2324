@@ -53,6 +53,8 @@ type AppDatabase interface {
 	GetUserFollows(uuid string) ([]string, error)
 	GetUserFollowers(uuid string) ([]string, error)
 	SetPhoto(ownerUUID string) (string, error)
+	GetPhoto(photoUUID string, requestingUUID string) (string, string, int, int, bool, error)
+	DeletePhoto(photoUUID string) error
 
 	Ping() error
 }
