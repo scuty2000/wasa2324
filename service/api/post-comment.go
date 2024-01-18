@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"lucascutigliani.it/wasa/WasaPhoto/service/api/reqcontext"
@@ -30,7 +31,6 @@ func (rt *_router) postComment(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 	if !json.Valid(content) || len(content) == 0 {
-		ctx.Logger.WithError(errors.New("invalid JSON string")).Error("Invalid JSON")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Invalid JSON")
@@ -89,10 +89,34 @@ func (rt *_router) postComment(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if !re.MatchString(issuerUUID) {
-		ctx.Logger.WithError(errors.New("username not matching regex")).Error("Name does not match pattern")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Issuer " + issuerUUID + " is not a valid UUID")
+		return
+	}
+
+	bearer := r.Header.Get("Authorization")
+	if bearer == "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Unauthorized: Authentication not provided."))
+		return
+	}
+
+	valid, err := utils.ValidateBearer(rt.db, ctx, issuerUUID, bearer)
+	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
+		return
+	}
+
+	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + issuerUUID)
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return
 	}
 

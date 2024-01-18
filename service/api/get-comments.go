@@ -37,18 +37,18 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		return
 	}
 
 	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		ctx.Logger.Error("Authentication has failed")
 		return
 	}
 
@@ -61,19 +61,19 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 			_, _ = w.Write([]byte("Not Found: Photo not found."))
 			return
 		}
+		ctx.Logger.WithError(err).Error("Error retrieving photo")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error retrieving photo")
 		return
 	}
 
 	hasPermission, err := utils.CheckUserAccess(rt.db, ctx, requestingUUID, ownerUUID)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error checking user access")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error checking user access")
 		return
 	}
 
@@ -87,10 +87,10 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 	comments, err := rt.db.GetPhotoComments(requiredPhotoID)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
+			ctx.Logger.WithError(err).Error("Error retrieving comments")
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-			ctx.Logger.WithError(err).Error("Error retrieving comments")
 			return
 		}
 	}

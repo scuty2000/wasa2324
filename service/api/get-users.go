@@ -61,33 +61,31 @@ func levenshtein(a, b string) int {
 }
 
 func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	_ = ps.ByName("")
 	searchQuery := r.URL.Query().Get("searchQuery")
 	if searchQuery == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery not provided."))
-		ctx.Logger.Error("searchQuery not provided")
 		return
 	}
 
 	if len(searchQuery) > 16 {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery too long."))
-		ctx.Logger.Error("searchQuery too long")
 		return
 	}
 
 	if len(searchQuery) < 3 {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: searchQuery too short."))
-		ctx.Logger.Error("searchQuery too short")
 		return
 	}
 
 	matching, err := rt.db.SearchUsers(searchQuery)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error searching users")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte("Internal Server Error: " + err.Error()))
-		ctx.Logger.WithError(err).Error("Error searching users")
 		return
 	}
 
@@ -109,6 +107,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 		user, err := utils.MakeUserFromUUID(rt.db, results[i].Uuid)
 		users[i] = *user
 		if err != nil {
+			ctx.Logger.WithError(err).Error("Error getting user")
 			w.WriteHeader(http.StatusInternalServerError)
 			_, _ = w.Write([]byte("Internal Server Error: " + err.Error()))
 			return

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"io"
@@ -30,7 +29,7 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	if !valid {
-		ctx.Logger.Error("Authentication has failed")
+		ctx.Logger.Warn("Invalid bearer token for user" + requiredUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return
@@ -46,7 +45,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 		return
 	}
 	if !json.Valid(content) || len(content) == 0 {
-		ctx.Logger.WithError(errors.New("invalid JSON string")).Error("Invalid JSON")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Invalid JSON"))
@@ -65,7 +63,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 		keys = append(keys, k)
 	}
 	if len(keys) != 1 || keys[0] != "username" {
-		ctx.Logger.WithError(errors.New("json not conforming to schema")).Error("JSON not conforming to schema")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("JSON not conforming to schema"))
@@ -74,7 +71,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 
 	username := jsonMap["username"]
 	if username == "" {
-		ctx.Logger.WithError(errors.New("username is empty")).Error("Username is empty")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Username is empty"))
@@ -93,7 +89,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	if !re.MatchString(username) {
-		ctx.Logger.WithError(errors.New("username not matching regex")).Error("Name does not match pattern")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(fmt.Sprintf("Name \"%s\" does not match pattern", username)))
@@ -101,7 +96,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	if len(username) < 3 {
-		ctx.Logger.WithError(errors.New("username too short")).Error("Name too short")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(fmt.Sprintf("Name \"%s\" is too short", username)))
@@ -109,7 +103,6 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	if len(username) > 16 {
-		ctx.Logger.WithError(errors.New("username too long")).Error("Name too long")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(fmt.Sprintf("Name \"%s\" is too long", username)))

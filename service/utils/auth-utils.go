@@ -17,7 +17,6 @@ func AuthUser(db database.AppDatabase, ctx reqcontext.RequestContext, username s
 		return "", "", false, err
 	}
 	token := "Bearer " + hex.EncodeToString(bytes)
-	ctx.Logger.Info("Generated bearer token for user ", username)
 
 	var uuid string
 	var created = false
@@ -57,7 +56,7 @@ func ValidateBearer(db database.AppDatabase, ctx reqcontext.RequestContext, uuid
 		return false, nil
 	}
 	if token != bearer {
-		ctx.Logger.WithError(errors.New("bearer token not matching")).Error("Bearer token not matching")
+		ctx.Logger.Warning("Bearer token mismatch for user ", uuid)
 		return false, nil
 	}
 	return true, nil

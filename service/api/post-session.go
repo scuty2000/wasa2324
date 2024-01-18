@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/julienschmidt/httprouter"
 	"io"
 	"lucascutigliani.it/wasa/WasaPhoto/service/api/reqcontext"
@@ -12,6 +11,7 @@ import (
 )
 
 func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	_ = ps.ByName("")
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -29,7 +29,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 	if !json.Valid(content) || len(content) == 0 {
-		ctx.Logger.WithError(errors.New("invalid JSON string")).Error("Invalid JSON")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Invalid JSON")
@@ -48,7 +47,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 		keys = append(keys, k)
 	}
 	if len(keys) != 1 || keys[0] != "name" {
-		ctx.Logger.WithError(errors.New("json not conforming to schema")).Error("JSON not conforming to schema")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("JSON not conforming to schema")
@@ -57,7 +55,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 
 	username := jsonMap["name"]
 	if username == "" {
-		ctx.Logger.WithError(errors.New("empty username")).Error("Empty username")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Empty username")
@@ -76,7 +73,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if !re.MatchString(username) {
-		ctx.Logger.WithError(errors.New("username not matching regex")).Error("Name does not match pattern")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Name " + username + " does not match pattern")
@@ -84,7 +80,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if len(username) < 3 {
-		ctx.Logger.WithError(errors.New("username too short")).Error("Name too short")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Name too short")
@@ -92,7 +87,6 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if len(username) > 16 {
-		ctx.Logger.WithError(errors.New("username too long")).Error("Name too long")
 		w.Header().Set("content-type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode("Name too long")
@@ -113,11 +107,13 @@ func (rt *_router) postSession(w http.ResponseWriter, r *http.Request, ps httpro
 	authMap["token"] = bearer
 
 	if created {
+		ctx.Logger.Info("User " + username + " created (\"" + uuid + "\")")
 		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(authMap)
 		return
 	}
+	ctx.Logger.Info("User " + username + " logged in")
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(authMap)

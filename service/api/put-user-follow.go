@@ -27,7 +27,7 @@ func (rt *_router) putUserFollow(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	if !valid {
-		ctx.Logger.Error("Authentication has failed")
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return

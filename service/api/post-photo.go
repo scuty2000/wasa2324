@@ -16,6 +16,7 @@ import (
 
 func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 
+	_ = ps.ByName("")
 	requestingUUID := r.Header.Get("X-Requesting-User-UUID")
 
 	if requestingUUID == "" {
@@ -34,18 +35,18 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		return
 	}
 
 	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		ctx.Logger.Error("Authentication has failed")
 		return
 	}
 
@@ -65,14 +66,12 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 
 	if len(data) < 100 {
-		ctx.Logger.WithError(err).Error("Photo too small")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Photo too small"))
 		return
 	}
 
 	if len(data) > 65000000 {
-		ctx.Logger.WithError(err).Error("Photo too big")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Photo too big"))
 		return

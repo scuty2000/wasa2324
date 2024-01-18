@@ -29,7 +29,7 @@ func (rt *_router) putUserLike(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if !valid {
-		ctx.Logger.Error("Authentication has failed")
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return
@@ -43,10 +43,10 @@ func (rt *_router) putUserLike(w http.ResponseWriter, r *http.Request, ps httpro
 			_, _ = w.Write([]byte("Not Found: Photo not found."))
 			return
 		}
+		ctx.Logger.WithError(err).Error("Error retrieving photo")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error retrieving photo")
 		return
 	}
 

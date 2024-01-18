@@ -28,6 +28,8 @@ func (rt *_router) deleteUserBan(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	if !valid {
+
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return

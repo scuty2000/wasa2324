@@ -30,18 +30,18 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		return
 	}
 
 	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		ctx.Logger.Error("Authentication has failed")
 		return
 	}
 
@@ -59,10 +59,10 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	hasPermission, err := utils.CheckUserAccess(rt.db, ctx, requestingUUID, requiredUUID)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error checking user access")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error checking user access")
 		return
 	}
 
@@ -75,10 +75,10 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 
 	user, err := utils.MakeUserFromUUID(rt.db, requiredUUID)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error getting user")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error getting user")
 		return
 	}
 

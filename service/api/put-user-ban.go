@@ -27,14 +27,13 @@ func (rt *_router) putUserBan(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 
 	if !valid {
-		ctx.Logger.Error("Authentication has failed")
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return
 	}
 
 	if requestingUUID == bannedUserUUID {
-		ctx.Logger.Error("Cannot ban yourself")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("Bad Request: Cannot ban yourself."))
 		return

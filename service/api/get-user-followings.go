@@ -31,18 +31,18 @@ func (rt *_router) getUserFollowings(w http.ResponseWriter, r *http.Request, ps 
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, requestingUUID, bearer)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		return
 	}
 
 	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		ctx.Logger.Error("Authentication has failed")
 		return
 	}
 
@@ -60,10 +60,10 @@ func (rt *_router) getUserFollowings(w http.ResponseWriter, r *http.Request, ps 
 
 	hasPermission, err := utils.CheckUserAccess(rt.db, ctx, requestingUUID, requiredUUID)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error checking user access")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error checking user access")
 		return
 	}
 
@@ -85,20 +85,20 @@ func (rt *_router) getUserFollowings(w http.ResponseWriter, r *http.Request, ps 
 			_ = json.NewEncoder(w).Encode(followingsMap)
 			return
 		}
-		ctx.Logger.WithError(err).Error("Error getting user followers")
+		ctx.Logger.WithError(err).Error("Error getting user followings")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write([]byte("Internal Server Error: Error getting user followers."))
+		_, _ = w.Write([]byte("Internal Server Error: Error getting user followings."))
 		return
 	}
 
 	for _, following := range followings {
 		followingUser, err := utils.MakeUserFromUUID(rt.db, following)
 		if err != nil {
-			ctx.Logger.WithError(err).Error("Error getting user followers")
+			ctx.Logger.WithError(err).Error("Error getting user followings")
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte("Internal Server Error: Error getting user followers."))
+			_, _ = w.Write([]byte("Internal Server Error: Error getting user followings."))
 			return
 		}
 		followingsMap["followings"] = append(followingsMap["followings"], *followingUser)

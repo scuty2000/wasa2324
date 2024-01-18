@@ -29,18 +29,18 @@ func (rt *_router) getUserStream(w http.ResponseWriter, r *http.Request, ps http
 	}
 	valid, err := utils.ValidateBearer(rt.db, ctx, userID, bearer)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error validating bearer token")
 		return
 	}
 
 	if !valid {
+		ctx.Logger.Warn("Invalid bearer token for user" + userID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
-		ctx.Logger.Error("Authentication has failed")
 		return
 	}
 
@@ -66,10 +66,10 @@ func (rt *_router) getUserStream(w http.ResponseWriter, r *http.Request, ps http
 
 	photos, photosCount, err := rt.db.GetPaginatedPhotos(userID, paginationIndexInt)
 	if err != nil {
+		ctx.Logger.WithError(err).Error("Error getting photos")
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write([]byte(fmt.Sprintf("Internal Server Error: %s", err.Error())))
-		ctx.Logger.WithError(err).Error("Error getting photos")
 		return
 	}
 
