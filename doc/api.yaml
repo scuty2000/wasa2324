@@ -61,13 +61,6 @@ components:
       minLength: 36
       maxLength: 36
 
-    ResourceID:
-      description: Simple resource identifier.
-      readOnly: true
-      type: integer
-      minimum: 0
-      example: 1234
-
     # Counters
 
     ResourceCount:
@@ -189,7 +182,7 @@ components:
       type: object
       properties:
         id:
-          { $ref: "#/components/schemas/ResourceID" }
+          { $ref: "#/components/schemas/UUID" }
         issuer:
           { $ref: "#/components/schemas/UUID" }
         date:
@@ -249,7 +242,7 @@ components:
       required: true
       description: Comment identifier parameter.
       schema:
-        { $ref: "#/components/schemas/ResourceID" }
+        { $ref: "#/components/schemas/UUID" }
 
     X-Requesting-User-UUID:
       name: X-Requesting-User-UUID
@@ -960,7 +953,7 @@ paths:
                 type: object
                 properties:
                   id:
-                    { $ref: "#/components/schemas/ResourceID" }
+                    { $ref: "#/components/schemas/UUID" }
                   date:
                     { $ref: "#/components/schemas/Date" }
                   text:
