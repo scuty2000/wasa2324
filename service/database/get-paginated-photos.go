@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"lucascutigliani.it/wasa/WasaPhoto/service/mocks"
 	"sort"
 	"strings"
@@ -41,13 +42,16 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	followingForSQL := "'" + strings.Join(following, "', '") + "'"
 
 	var photosCount int
-	err = db.c.QueryRow("SELECT COUNT(*) FROM Photos WHERE OWNER_UUID NOT IN (?) AND OWNER_UUID IN (?)", uuidsForSQL, followingForSQL).Scan(&photosCount)
+	formattedQuery := fmt.Sprintf("SELECT COUNT(*) FROM Photos WHERE OWNER_UUID NOT IN (%s) AND OWNER_UUID IN (%s)", uuidsForSQL, followingForSQL)
+	err = db.c.QueryRow(formattedQuery).Scan(&photosCount)
 
 	if offsetMultiplier == 0 {
-		rows, err = db.c.Query("SELECT * FROM Photos WHERE OWNER_UUID NOT IN (?) AND OWNER_UUID IN (?) ORDER BY date DESC LIMIT 10", uuidsForSQL, followingForSQL)
+		formattedQuery = fmt.Sprintf("SELECT * FROM Photos WHERE OWNER_UUID NOT IN (%s) AND OWNER_UUID IN (%s) ORDER BY date DESC LIMIT 10", uuidsForSQL, followingForSQL)
 	} else {
-		rows, err = db.c.Query("SELECT * FROM Photos WHERE OWNER_UUID NOT IN (?) AND OWNER_UUID IN (?) ORDER BY date DESC LIMIT 10 OFFSET ?", uuidsForSQL, followingForSQL, offsetMultiplier*10)
+		formattedQuery = fmt.Sprintf("SELECT * FROM Photos WHERE OWNER_UUID NOT IN (%s) AND OWNER_UUID IN (%s) ORDER BY date DESC LIMIT 10 OFFSET %d", uuidsForSQL, followingForSQL, offsetMultiplier*10)
 	}
+
+	rows, err = db.c.Query(formattedQuery)
 
 	if err != nil {
 		return nil, 0, err
