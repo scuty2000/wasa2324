@@ -93,7 +93,7 @@ func (rt *_router) getUserFollowers(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	for _, follower := range followers {
-		followerUser, err := utils.MakeUserFromUUID(rt.db, follower)
+		followerUser, err := utils.MakeUserFromUUID(rt.db, ctx, follower, requestingUUID)
 		if err != nil {
 			ctx.Logger.WithError(err).Error("Error getting user followers")
 			w.Header().Set("Content-Type", "text/plain")

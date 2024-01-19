@@ -104,7 +104,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 
 	users := make([]mocks.User, len(results))
 	for i := 0; i < 20 && i < len(results); i++ {
-		user, err := utils.MakeUserFromUUID(rt.db, results[i].Uuid)
+		user, err := utils.MakeUserFromUUID(rt.db, ctx, results[i].Uuid, "")
 		users[i] = *user
 		if err != nil {
 			ctx.Logger.WithError(err).Error("Error getting user")

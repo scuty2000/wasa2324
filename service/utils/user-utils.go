@@ -27,9 +27,14 @@ func MakeUserFromUUID(db database.AppDatabase, ctx reqcontext.RequestContext, uu
 		return nil, err
 	}
 
-	isBanned, err := CheckUserAccess(db, ctx, uuid, requestingUUID)
-	if err != nil {
-		return nil, err
+	var isBanned bool
+	if requestingUUID == "" {
+		isBanned = false
+	} else {
+		isBanned, err = CheckUserAccess(db, ctx, uuid, requestingUUID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &mocks.User{

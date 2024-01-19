@@ -73,7 +73,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	user, err := utils.MakeUserFromUUID(rt.db, requiredUUID)
+	user, err := utils.MakeUserFromUUID(rt.db, ctx, requiredUUID, requestingUUID)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Error getting user")
 		w.Header().Set("Content-Type", "text/plain")
