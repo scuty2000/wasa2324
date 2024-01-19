@@ -63,6 +63,9 @@ type AppDatabase interface {
 	GetComment(commentUUID string, photoUUID string) (string, string, string, error)
 	GetPhotoComments(photoUUID string) ([]mocks.Comment, error)
 	GetPaginatedPhotos(requestingUUID string, offsetMultiplier int) ([]mocks.Photo, int, error)
+	GetFollowersCount(uuid string) (int, error)
+	GetFollowingCount(uuid string) (int, error)
+	GetUserPhotosCount(uuid string) (int, error)
 
 	Ping() error
 }
