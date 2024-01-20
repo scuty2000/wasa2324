@@ -45,7 +45,7 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
+		ctx.Logger.Warn(utils.InvalidBearer + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
@@ -130,8 +130,7 @@ func (rt *_router) getComments(w http.ResponseWriter, r *http.Request, ps httpro
 		subset = []mocks.Comment{}
 	}
 
-	var response CommentsResponse
-	response = CommentsResponse{
+	response := CommentsResponse{
 		Comments:        subset,
 		PaginationLimit: paginationLimit,
 	}

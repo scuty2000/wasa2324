@@ -16,6 +16,7 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	if err != nil {
 		return nil, 0, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var bannedUUID string
 		if err := rows.Scan(&bannedUUID); err != nil {
@@ -30,6 +31,7 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	if err != nil {
 		return nil, 0, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var followedUUID string
 		if err := rows.Scan(&followedUUID); err != nil {
@@ -44,6 +46,9 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	var photosCount int
 	formattedQuery := fmt.Sprintf("SELECT COUNT(*) FROM Photos WHERE OWNER_UUID NOT IN (%s) AND OWNER_UUID IN (%s)", uuidsForSQL, followingForSQL)
 	err = db.c.QueryRow(formattedQuery).Scan(&photosCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	if offsetMultiplier == 0 {
 		formattedQuery = fmt.Sprintf("SELECT * FROM Photos WHERE OWNER_UUID NOT IN (%s) AND OWNER_UUID IN (%s) ORDER BY date DESC LIMIT 10", uuidsForSQL, followingForSQL)
@@ -52,10 +57,10 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	}
 
 	rows, err = db.c.Query(formattedQuery)
-
 	if err != nil {
 		return nil, 0, err
 	}
+	defer rows.Close()
 
 	var results []mocks.Photo
 	for rows.Next() {

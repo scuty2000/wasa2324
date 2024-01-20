@@ -29,7 +29,7 @@ func (rt *_router) putUserUsername(w http.ResponseWriter, r *http.Request, ps ht
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + requiredUUID)
+		ctx.Logger.Warn(utils.InvalidBearer + requiredUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return

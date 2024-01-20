@@ -17,7 +17,6 @@ func (db *appdbimpl) CreateUser(username string) (string, error) {
 }
 
 func (db *appdbimpl) checkCollision(identifier string) bool {
-	var err error
-	err = db.c.QueryRow("SELECT UUID FROM Users WHERE UUID=?", identifier).Scan()
+	err := db.c.QueryRow("SELECT UUID FROM Users WHERE UUID=?", identifier).Scan()
 	return !errors.Is(err, sql.ErrNoRows)
 }

@@ -6,6 +6,7 @@ func (db *appdbimpl) GetUserBans(uuid string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var ban string
 		err = rows.Scan(&ban)
@@ -13,10 +14,6 @@ func (db *appdbimpl) GetUserBans(uuid string) ([]string, error) {
 			return nil, err
 		}
 		bans = append(bans, ban)
-	}
-	err = rows.Close()
-	if err != nil {
-		return nil, err
 	}
 	return bans, nil
 }

@@ -113,7 +113,7 @@ func (rt *_router) postComment(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + issuerUUID)
+		ctx.Logger.Warn(utils.InvalidBearer + issuerUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))

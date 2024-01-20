@@ -27,7 +27,7 @@ func (rt *_router) deleteUserFollow(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
+		ctx.Logger.Warn(utils.InvalidBearer + requestingUUID)
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
 		return

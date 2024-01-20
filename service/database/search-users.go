@@ -7,12 +7,13 @@ import (
 
 func (db *appdbimpl) SearchUsers(searchQuery string) ([][]string, error) {
 	rows, err := db.c.Query("SELECT UUID, USERNAME FROM Users WHERE USERNAME LIKE ?", "%"+searchQuery+"%")
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
-	}
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
+	defer rows.Close()
 
 	var results [][]string
 	for rows.Next() {
@@ -24,8 +25,6 @@ func (db *appdbimpl) SearchUsers(searchQuery string) ([][]string, error) {
 		result := []string{uuid, username}
 		results = append(results, result)
 	}
-
-	err = rows.Close()
 	if err != nil {
 		return nil, err
 	}

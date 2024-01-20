@@ -37,7 +37,7 @@ func (rt *_router) getUserStream(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + userID)
+		ctx.Logger.Warn(utils.InvalidBearer + userID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))

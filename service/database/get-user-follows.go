@@ -6,6 +6,7 @@ func (db *appdbimpl) GetUserFollows(uuid string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var followed string
 		err = rows.Scan(&followed)
@@ -14,7 +15,6 @@ func (db *appdbimpl) GetUserFollows(uuid string) ([]string, error) {
 		}
 		follows = append(follows, followed)
 	}
-	err = rows.Close()
 	if err != nil {
 		return nil, err
 	}

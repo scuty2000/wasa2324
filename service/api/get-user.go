@@ -38,7 +38,7 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	if !valid {
-		ctx.Logger.Warn("Invalid bearer token for user" + requestingUUID)
+		ctx.Logger.Warn(utils.InvalidBearer + requestingUUID)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusUnauthorized)
 		_, _ = w.Write([]byte("Unauthorized: Authentication has failed."))
@@ -85,5 +85,4 @@ func (rt *_router) getUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(user)
-	return
 }
