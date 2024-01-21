@@ -707,6 +707,66 @@ paths:
   /photos:
     parameters:
       - { $ref: "#/components/parameters/X-Requesting-User-UUID" }
+    get:
+      parameters:
+        - name: userID
+          in: query
+          description: User UUID
+          required: true
+          schema:
+            { $ref: "#/components/schemas/UUID" }
+        - { $ref: "#/components/parameters/paginationIndex" }
+      tags: ["Photos"]
+      operationId: getPhotos
+      security:
+        - BearerAuth: []
+      summary: Get user photos
+      description: |
+        This endpoint is used to get the photos
+        of a specific user by it's UUID.
+
+        Will be returned 10 photos at a time,
+        ordered from the most recent.
+        To get more images, you must increment the
+        "paginationIndex" parameter by 1 and so on until
+        the given "paginationLimit".
+
+        If the requested userID does not exist, or the "paginationIndex"
+        is bigger than "paginationLimit" an error will be returned.
+      responses:
+        '200':
+          description: User photos in the content.
+          content:
+            application/json:
+              schema:
+                description: Object containing the user photos ids
+                type: object
+                properties:
+                  user-photos:
+                    description: |
+                      Array of photo ids
+                    type: array
+                    minItems: 0
+                    maxItems: 10
+                    items:
+                      { $ref: "#/components/schemas/UUID" }
+                  paginationLimit:
+                    description: |
+                      The paginationLimit represents the maximum
+                      value for paginationIndex
+                    type: integer
+                    minimum: 0
+                    example: 4
+        '400':
+          { $ref: "#/components/responses/BadRequest" }
+        '401':
+          { $ref: "#/components/responses/Unauthorized" }
+        '403':
+          { $ref: "#/components/responses/Forbidden" }
+        '404':
+          { $ref: "#/components/responses/NotFound" }
+        '500':
+          { $ref: "#/components/responses/InternalServerError" }
     post:
       tags: ["Photos"]
       operationId: uploadPhoto
