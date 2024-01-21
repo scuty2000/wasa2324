@@ -66,6 +66,7 @@ type AppDatabase interface {
 	GetFollowersCount(uuid string) (int, error)
 	GetFollowingCount(uuid string) (int, error)
 	GetUserPhotosCount(uuid string) (int, error)
+	GetUserPhotos(uuid string, offsetMultiplier int) ([]string, int, error)
 
 	Ping() error
 }
