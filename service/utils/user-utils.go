@@ -27,13 +27,25 @@ func MakeUserFromUUID(db database.AppDatabase, ctx reqcontext.RequestContext, uu
 		return nil, err
 	}
 
-	var isBanned bool
+	var requestedUserHasAccess bool
 	if requestingUUID == "" {
-		isBanned = false
+		requestedUserHasAccess = false
 	} else {
-		isBanned, err = CheckUserAccess(db, ctx, uuid, requestingUUID)
+		requestedUserHasAccess, err = CheckUserAccess(db, ctx, uuid, requestingUUID)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	isFollowed := false
+	followings, err := db.GetUserFollows(requestingUUID)
+	if err != nil {
+		return nil, err
+	}
+	for _, following := range followings {
+		if following == uuid {
+			isFollowed = true
+			break
 		}
 	}
 
@@ -43,6 +55,7 @@ func MakeUserFromUUID(db database.AppDatabase, ctx reqcontext.RequestContext, uu
 		FollowersCount: followersCount,
 		FollowingCount: followingCount,
 		PhotosCount:    photosCount,
-		IsBanned:       isBanned,
+		IsBanned:       !requestedUserHasAccess,
+		IsFollowed:     isFollowed,
 	}, err
 }
