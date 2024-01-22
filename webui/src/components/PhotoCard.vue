@@ -19,11 +19,16 @@ export default {
 				commentsCount: 0,
 				liked: false
 			},
+			currentUser: null,
+			userInfos: {},
 			showCommentsSection: false,
-			comments: [],
 			newCommentText: '',
 			showDeleteButton: false,
 			showDeleteConfirmation: false,
+			comments: [],
+			paginationIndex: 0,
+			paginationLimit: 0,
+			hasMoreComments: false,
 		};
 	},
 	emits: ['photo-deleted'],
@@ -38,7 +43,6 @@ export default {
 				});
 				this.photoDetails = response.data;
 				this.showDeleteButton = this.photoDetails.author === localStorage.getItem('userId');
-				console.log(this.showDeleteButton);
 			} catch (error) {
 				console.error("Error loading photo data:", error);
 				this.errormsg = "Error loading photo data: " + error.toString();
@@ -79,11 +83,38 @@ export default {
 		showComments() {
 			this.showCommentsSection = !this.showCommentsSection;
 		},
-		postComment() {
-			// Aggiungi qui la logica per inviare il nuovo commento
-		},
+		async postComment()
+		{
+			if (!this.newCommentText.trim()) {
+				console.error("Comment text is empty");
+				return;
+			}
+
+			try {
+				const issuerUUID = localStorage.getItem('userId');
+				await this.$axios.post(`/photos/${this.photoUUID}/comments`, {
+					text: this.newCommentText,
+					issuer: issuerUUID
+				}, {
+					headers: {
+						'Authorization': localStorage.getItem('authToken')
+					}
+				});
+				await this.fetchPhotoDetails()
+				this.comments = []
+				this.paginationIndex = 0
+				await this.fetchComments()
+
+				this.newCommentText = '';
+			} catch (error) {
+				console.error("Error posting comment:", error);
+				this.errormsg = "Error posting comment: " + error.toString();
+			}
+		}
+,
 		toggleDeleteConfirmation() {
 			this.showDeleteConfirmation = !this.showDeleteConfirmation;
+			this.showCommentsSection = false;
 		},
 		async deletePhoto() {
 			try {
@@ -101,9 +132,59 @@ export default {
 				this.errormsg = "Error deleting photo: " + error.toString();
 			}
 		},
+		async fetchComments() {
+			try {
+				const response = await this.$axios.get(`/photos/${this.photoUUID}/comments?paginationIndex=${this.paginationIndex}`, {
+					headers: {
+						'X-Requesting-User-UUID': localStorage.getItem('userId'),
+						'Authorization': localStorage.getItem('authToken')
+					}
+				});
+
+				this.comments.push(...response.data.comments);
+				this.paginationLimit = response.data.paginationLimit;
+				this.hasMoreComments = this.paginationIndex < this.paginationLimit;
+
+				await Promise.all(this.comments.map(async (comment) => {
+					if (!this.userInfos[comment.issuer]) {
+						const userResponse = await this.$axios.get(`/users/${comment.issuer}`, {
+							headers: {
+								'X-Requesting-User-UUID': localStorage.getItem('userId'),
+								'Authorization': localStorage.getItem('authToken')
+							}
+						});
+						this.userInfos[comment.issuer] = userResponse.data.username;
+					}
+				}));
+			} catch (error) {
+				console.error("Error fetching comments:", error);
+				this.errormsg = "Error fetching comments: " + error.toString();
+			}
+		},
+		loadMoreComments() {
+			this.paginationIndex += 1;
+			this.fetchComments();
+		},
+		async deleteComment(commentId) {
+			try {
+				await this.$axios.delete(`/photos/${this.photoUUID}/comments/${commentId}`, {
+					headers: {
+						'X-Requesting-User-UUID': localStorage.getItem('userId'),
+						'Authorization': localStorage.getItem('authToken')
+					}
+				});
+				await this.fetchPhotoDetails()
+				this.comments = this.comments.filter(comment => comment.id !== commentId);
+			} catch (error) {
+				console.error("Error deleting comment:", error);
+				this.errormsg = "Error deleting comment: " + error.toString();
+			}
+		},
 	},
 	mounted() {
+		this.currentUser = localStorage.getItem('userId');
 		this.fetchPhotoDetails();
+		this.fetchComments();
 	}
 }
 </script>
@@ -135,12 +216,29 @@ export default {
 		</div>
 	</div>
 	<div class="comments-section" v-if="showCommentsSection && !showDeleteConfirmation && errormsg == null">
+		<hr class="my-2">
 		<div v-for="comment in comments" :key="comment.id" class="comment">
-			<span>{{ comment.author }}: {{ comment.text }}</span>
+			<div class="comment-header d-flex justify-content-between">
+				<span class="comment-author">{{ userInfos[comment.issuer] || 'Unknown user' }}</span>
+				<span class="comment-date">{{ formatDate(comment.date) }}</span>
+			</div>
+			<div class="comment-text">
+				{{ comment.text }}
+			</div>
+			<div class="comment-header d-flex justify-content-end">
+				<span v-if="comment.issuer === currentUser" @click="deleteComment(comment.id)" class="icon-btn">
+					<i class="bi bi-trash" style="color: red;"></i>
+				</span>
+			</div>
 		</div>
+		<button v-if="hasMoreComments" @click="loadMoreComments" class="btn btn-secondary">Show more comments</button>
 
 		<div class="new-comment">
-			<input type="text" class="form-control rounded" v-model="newCommentText" maxlength="250" placeholder="Leave a comment...">
+	  		<textarea class="form-control rounded"
+				v-model="newCommentText"
+				maxlength="250"
+				placeholder="Leave a comment..."
+				rows="2"></textarea>
 			<button class="btn btn-light" @click="postComment">
 				<i class="bi bi-send-fill"></i>
 			</button>
@@ -231,6 +329,12 @@ export default {
 	align-items: center;
 }
 
+.new-comment textarea {
+	flex-grow: 1;
+	margin-right: 0.5rem;
+	resize: vertical;
+}
+
 .new-comment input {
 	flex-grow: 1;
 	margin-right: 0.5rem;
@@ -268,5 +372,34 @@ export default {
 .confirmation-buttons {
 	display: flex;
 	justify-content: center;
+}
+
+.comment {
+	padding: 0.5rem;
+	background-color: #f8f9fa;
+	border-radius: 0.25rem;
+	margin-bottom: 0.5rem;
+}
+
+.comment-header {
+	font-size: 0.9rem;
+	color: #6c757d;
+}
+
+.comment-author {
+	font-weight: bold;
+}
+
+.comment-date {
+	font-style: italic;
+}
+
+.comment-text {
+	margin-top: 0.5rem;
+	color: #495057;
+}
+
+hr.my-2 {
+	border-top: 1px solid #e9ecef;
 }
 </style>

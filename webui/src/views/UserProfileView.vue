@@ -184,8 +184,6 @@ export default {
 			</div>
 		</div>
 
-		<!-- Sezione per le foto dell'utente -->
-
 		<div class="container" v-if="errormsg == null">
 			<div class="row justify-content-center">
 				<div class="d-flex flex-column align-items-center" v-for="photo in photos" :key="photo.uuid">
