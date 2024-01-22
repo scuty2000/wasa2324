@@ -64,7 +64,7 @@ func (rt *_router) deletePhoto(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	filePath := "./webui/uploads/" + ownerUUID + "/" + photoUUID + "." + extension
+	filePath := "./uploads/" + ownerUUID + "/" + photoUUID + "." + extension
 	err = os.Remove(filePath)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Error deleting photo file")
