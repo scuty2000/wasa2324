@@ -31,7 +31,7 @@ func (db *appdbimpl) GetPhotoComments(photoUUID string) ([]mocks.Comment, error)
 	}
 
 	sort.SliceStable(results, func(i, j int) bool {
-		return results[i].Date < results[j].Date
+		return results[i].Date > results[j].Date
 	})
 
 	return results, err
