@@ -3,10 +3,11 @@ import {useRoute} from "vue-router";
 import {reactive} from "vue";
 import instance from "../services/axios";
 import PhotoCard from "../components/PhotoCard.vue";
+import PhotoUploadModal from "./PhotoUploadModal.vue";
 
 export default {
 	name: "UserProfileView",
-	components: { PhotoCard },
+	components: { PhotoUploadModal, PhotoCard },
 	data: function() {
 		return {
 			errormsg: null,
@@ -23,6 +24,9 @@ export default {
 			showActionButtons: false,
 			photoPaginationIndex: 0,
 			hasMorePhotos: true,
+			isUploadModalOpen: false,
+			editingUsername: false,
+			newUsername: '',
 		}
 	},
 	mounted() {
@@ -160,7 +164,36 @@ export default {
 			if (entries[0].isIntersecting) {
 				this.loadMorePhotos();
 			}
-		}
+		},
+		openUploadModal() {
+			this.isUploadModalOpen = true;
+		},
+		async closeUploadModal() {
+			this.isUploadModalOpen = false;
+			await this.fetchUserData(this.userProfile.uuid);
+		},
+		editUsername() {
+			this.editingUsername = true;
+			this.newUsername = this.userProfile.username;
+		},
+		async saveUsername() {
+			try {
+				const userID = this.userProfile.uuid;
+				const authToken = localStorage.getItem('authToken');
+				await instance.put(`/users/${userID}/username`, { username: this.newUsername }, {
+					headers: {
+						'Authorization': authToken
+					}
+				});
+				this.userProfile.username = this.newUsername;
+				localStorage.setItem('username', this.newUsername);
+				this.editingUsername = false;
+				window.location.reload();
+			} catch (error) {
+				console.error("Error updating username:", error);
+				this.errormsg = error.toString();
+			}
+		},
 	},
 	watch: {
 		'$route.params.userID'(newUserID) {
@@ -181,7 +214,15 @@ export default {
 		<ErrorMsg :msg="errormsg"></ErrorMsg>
 	</div>
 	<div class="user-profile container py-4" v-if="errormsg == null">
-		<h2 class="text-center mb-4">{{ userProfile.username }}</h2>
+		<div v-if="!editingUsername">
+			<h2 class="text-center mb-4">{{ userProfile.username }}
+				<i class="bi bi-pencil-square" @click="editUsername"></i>
+			</h2>
+		</div>
+		<div v-else class="username-edit-section">
+			<input type="text" v-model="newUsername" class="username-edit-input" pattern="^[a-zA-Z0-9_]*$" maxlength="16" minlength="3">
+			<button class="username-save-button" @click="saveUsername">Save</button>
+		</div>
 
 		<div class="card mx-auto mb-4" style="max-width: 20rem;">
 			<div class="card-body">
@@ -227,9 +268,110 @@ export default {
 				<div ref="loadMorePhotosTrigger"></div>
 			</div>
 		</div>
-
+		<button class="upload-button" @click="openUploadModal">
+			<i class="bi bi-upload"></i> Upload a Photo
+		</button>
+		<PhotoUploadModal v-if="isUploadModalOpen" @close="closeUploadModal" />
 	</div>
 </template>
 
 <style scoped>
+.upload-button {
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	background-color: rgba(45, 90, 110, 0.8);
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	font-weight: bold;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	z-index: 1000;
+}
+
+.upload-button i {
+	margin-right: 10px;
+}
+
+.upload-button {
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	background-color: rgba(45, 90, 110, 0.8);
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	font-weight: bold;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	z-index: 1000;
+}
+
+.upload-button i {
+	margin-right: 10px;
+}
+
+.user-profile {
+	margin-top: 20px;
+}
+
+.username-edit-section {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 10px;
+}
+
+.username-edit-input {
+	flex-grow: 1;
+	padding: 10px;
+	border: 1px solid #ced4da;
+	border-radius: 0.25rem;
+	margin-right: 10px;
+	font-size: 1rem;
+	line-height: 1.5;
+	color: #495057;
+	background-color: #fff;
+	background-clip: padding-box;
+	transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+	max-width: 200px;
+}
+
+.username-edit-input:focus {
+	color: #495057;
+	background-color: #fff;
+	border-color: #80bdff;
+	outline: 0;
+	box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.username-save-button {
+	background-color: #4CAF50;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 5px 15px;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.bi-pencil-square {
+	cursor: pointer;
+	margin-left: 10px;
+	color: #1762cb;
+}
+
+.username-edit-input:focus + .username-save-button {
+	margin-left: 5px;
+}
+
+.username-save-button:disabled {
+	background-color: #ccc;
+	cursor: not-allowed;
+}
 </style>

@@ -17,7 +17,7 @@ export default {
 		};
 	},
 	mounted() {
-		this.username = localStorage.getItem('username');
+		this.username = this.getUsername();
 	},
 	methods: {
 		logout() {
@@ -33,7 +33,10 @@ export default {
 		},
 		goProfile() {
 			this.$router.push(`/user/${localStorage.getItem('userId')}`);
-		}
+		},
+		getUsername() {
+			return localStorage.getItem('username');
+    },
 	}
 }
 </script>
@@ -58,9 +61,9 @@ export default {
 
 			<ul class="navbar-nav ms-auto">
 				<li class="nav-item dropdown card">
-					<div class="nav-link dropdown-toggle justify-content-center align-items-center d-flex" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #1762cb">
-						<i class="bi bi-person-circle"></i>
-						<span class="ms-2">{{ username }}&nbsp;</span>
+					<div class="nav-link dropdown-toggle justify-content-center align-items-center d-flex" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: rgba(45, 90, 110, 0.8);">
+						<i class="bi bi-person-badge-fill"></i>
+						<span class="ms-2">{{ getUsername() }}&nbsp;</span>
 					</div>
 					<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 						<li class="dropdown-item" @click="showProfile()">Show profile</li>

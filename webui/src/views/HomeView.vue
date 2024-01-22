@@ -3,16 +3,18 @@ import Navbar from "../components/Navbar.vue";
 import PhotoCard from "../components/PhotoCard.vue";
 import ErrorMsg from "../components/ErrorMsg.vue";
 import instance from "../services/axios";
+import PhotoUploadModal from "./PhotoUploadModal.vue";
 
 export default {
 	name: "HomeView",
-	components: { PhotoCard, ErrorMsg, Navbar },
+	components: { PhotoCard, ErrorMsg, Navbar, PhotoUploadModal },
 	data() {
 		return {
 			photos: [],
 			errormsg: null,
 			photoPaginationIndex: 0,
 			hasMorePhotos: true,
+			isUploadModalOpen: false,
 		};
 	},
 	mounted() {
@@ -57,6 +59,12 @@ export default {
 				this.loadMorePhotos();
 			}
 		},
+		openUploadModal() {
+			this.isUploadModalOpen = true;
+		},
+		closeUploadModal() {
+			this.isUploadModalOpen = false;
+		},
 	},
 	unmounted() {
 		if (this.observer) {
@@ -87,6 +95,10 @@ export default {
 				</div>
 			</div>
 		</div>
+		<button class="upload-button" @click="openUploadModal">
+			<i class="bi bi-upload"></i> Upload a Photo
+		</button>
+		<PhotoUploadModal v-if="isUploadModalOpen" @close="closeUploadModal" />
 	</div>
 	<div ref="loadMorePhotosTrigger" class="load-more-trigger"></div>
 </template>
@@ -94,6 +106,7 @@ export default {
 <style>
 .user-stream {
 	margin-top: 20px;
+	position: relative;
 }
 
 .no-photos-card {
@@ -119,5 +132,25 @@ export default {
 .load-more-trigger {
 	min-height: 10px;
 	width: 100%;
+}
+
+.upload-button {
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	background-color: rgba(45, 90, 110, 0.8);
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	font-weight: bold;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	z-index: 1000;
+}
+
+.upload-button i {
+	margin-right: 10px;
 }
 </style>
