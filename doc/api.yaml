@@ -100,6 +100,12 @@ components:
             by the user receiving the object.
           readOnly: true
           type: boolean
+        isFollowed:
+          description: |
+            Flag indicating if this user is followed
+            by the user receiving the object.
+          readOnly: true
+          type: boolean
       readOnly: true
 
     Username:
@@ -667,7 +673,7 @@ paths:
         If the requested userID does not exist, or the "paginationIndex"
         is bigger than "paginationLimit" an error will be returned.
 
-        To get the image, you must visit {baseURL}/uploads/{userID}/{photoID}.{png/jpg}
+        To get the image, you must visit {baseURL}:8080/uploads/{userID}/{photoID}.{png/jpg}
       responses:
         '200':
           description: The user is found and the stream is the content.
