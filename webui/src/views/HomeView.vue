@@ -72,7 +72,7 @@ export default {
 			<div v-if="errormsg">
 				<ErrorMsg :msg="errormsg" />
 			</div>
-			<div v-else-if="photos.length === 0" class="d-flex justify-content-center">
+			<div v-else-if="photos != null && photos.length === 0" class="d-flex justify-content-center">
 				<div class="no-photos-card card text-center">
 					<div class="card-body d-flex align-items-center justify-content-center">
 						<span role="img" aria-label="Thinking face" class="emoji">🤔</span>
@@ -117,7 +117,7 @@ export default {
 }
 
 .load-more-trigger {
-	min-height: 1px;
+	min-height: 10px;
 	width: 100%;
 }
 </style>
