@@ -21,11 +21,22 @@ export default {
 			}),
 			photos: [],
 			showActionButtons: false,
+			photoPaginationIndex: 0,
+			hasMorePhotos: true,
 		}
 	},
 	mounted() {
 		const route = useRoute();
 		this.fetchUserData(route.params.userID);
+		this.loadMorePhotos();
+
+		const options = {
+			root: null,
+			rootMargin: '0px',
+			threshold: 1.0
+		};
+		this.observer = new IntersectionObserver(this.handleIntersect, options);
+		this.observer.observe(this.$refs.loadMorePhotosTrigger);
 	},
 	methods: {
 		async fetchUserData(userID) {
@@ -41,22 +52,11 @@ export default {
 					}
 				});
 				this.userProfile = response.data;
-				try {
-					this.photos = [];
-					const response = await this.$axios.get('/photos', {
-						headers: {
-							'X-Requesting-User-UUID': requestingUserID,
-							'Authorization': authToken
-						},
-						params: {
-							'userID': userID,
-						}
-					});
-					this.photos = response.data["user-photos"];
-				} catch (error) {
-					this.errormsg = error.toString();
-					console.error("Error loading user photos:", error);
-				}
+
+				this.photoPaginationIndex = 0;
+				this.hasMorePhotos = true;
+				this.photos = [];
+				await this.loadMorePhotos();
 			} catch (error) {
 				this.errormsg = error.toString();
 				console.error("Error loading user data:", error);
@@ -130,6 +130,36 @@ export default {
 		handlePhotoDeleted() {
 			console.log("Photo deleted, reloading user data");
 			this.fetchUserData(this.userProfile.uuid);
+		},
+		async loadMorePhotos() {
+			if (!this.hasMorePhotos) return;
+			if (this.userProfile.uuid == null) return;
+
+			try {
+				const requestingUserID = localStorage.getItem('userId');
+				const authToken = localStorage.getItem('authToken');
+				const response = await this.$axios.get('/photos', {
+					headers: {
+						'X-Requesting-User-UUID': requestingUserID,
+						'Authorization': authToken
+					},
+					params: {
+						'userID': this.userProfile.uuid,
+						'paginationIndex': this.photoPaginationIndex,
+					}
+				});
+				this.photos.push(...response.data["user-photos"]);
+				this.photoPaginationIndex++;
+				this.hasMorePhotos = response.data["paginationLimit"] >= this.photoPaginationIndex;
+			} catch (error) {
+				console.error("Error loading more photos:", error);
+			}
+		},
+
+		handleIntersect(entries) {
+			if (entries[0].isIntersecting) {
+				this.loadMorePhotos();
+			}
 		}
 	},
 	watch: {
@@ -189,6 +219,7 @@ export default {
 				<div class="d-flex flex-column align-items-center" v-for="photo in photos" :key="photo.uuid">
 					<PhotoCard :photo-u-u-i-d="photo" @photo-deleted="handlePhotoDeleted"></PhotoCard><br>
 				</div>
+				<div ref="loadMorePhotosTrigger"></div>
 			</div>
 		</div>
 
