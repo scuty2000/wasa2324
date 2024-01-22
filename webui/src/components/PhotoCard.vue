@@ -1,6 +1,9 @@
 <script>
+import ErrorMsg from "./ErrorMsg.vue";
+
 export default {
 	name: "PhotoCard",
+	components: {ErrorMsg},
 	props: {
 		photoUUID: String,
 	},
@@ -19,6 +22,8 @@ export default {
 			showCommentsSection: false,
 			comments: [],
 			newCommentText: '',
+			showDeleteButton: false,
+			showDeleteConfirmation: false,
 		};
 	},
 	methods: {
@@ -31,8 +36,10 @@ export default {
 					},
 				});
 				this.photoDetails = response.data;
+				this.showDeleteButton = this.photoDetails.author === localStorage.getItem('userId');
 			} catch (error) {
 				console.error("Error loading photo data:", error);
+				this.errormsg = "Error loading photo data: " + error.toString();
 			}
 		},
 		formatDate(dateString) {
@@ -64,7 +71,7 @@ export default {
 				await this.fetchPhotoDetails();
 			} catch (error) {
 				console.error("Error toggling like status:", error);
-				// Gestisci l'errore qui
+				this.errormsg = "Error toggling like status: " + error.toString();
 			}
 		},
 		showComments() {
@@ -72,6 +79,25 @@ export default {
 		},
 		postComment() {
 			// Aggiungi qui la logica per inviare il nuovo commento
+		},
+		toggleDeleteConfirmation() {
+			this.showDeleteConfirmation = !this.showDeleteConfirmation;
+		},
+		async deletePhoto() {
+			try {
+				await this.$axios.delete(`/photos/${this.photoUUID}`, {
+					headers: {
+						'X-Requesting-User-UUID': localStorage.getItem('userId'),
+						'Authorization': localStorage.getItem('authToken')
+					}
+				});
+				this.showDeleteConfirmation = false;
+
+				this.$emit('photo-deleted', this.photoUUID);
+			} catch (error) {
+				console.error("Error deleting photo:", error);
+				this.errormsg = "Error deleting photo: " + error.toString();
+			}
 		},
 	},
 	mounted() {
@@ -85,7 +111,7 @@ export default {
 		<img :src="`http://localhost:8080/uploads/${photoDetails.author}/${photoUUID}.${photoDetails.extension}`" alt="Photo" class="card-img-top" />
 
 		<div class="card-body">
-			<div class="likes-comments d-flex justify-content-between align-items-center">
+			<div v-if="errormsg == null" class="likes-comments d-flex justify-content-between align-items-center">
 				<span @click="toggleLike" class="icon-btn">
 				  <i :class="['bi', photoDetails.liked ? 'bi-heart-fill' : 'bi-heart']"></i>
 				  {{ photoDetails.likesCount }}
@@ -95,10 +121,14 @@ export default {
 				  {{ photoDetails.commentsCount }}
 				</span>
 				<span class="photo-date">{{ formatDate(photoDetails.date) }}</span>
+				<span v-if="!showDeleteConfirmation" @click="toggleDeleteConfirmation" class="icon-btn" style="color: red;">
+				  <i class="bi bi-trash-fill"></i>
+				</span>
 			</div>
+			<ErrorMsg v-if="errormsg != null" :msg="errormsg"></ErrorMsg>
 		</div>
 	</div>
-	<div class="comments-section" v-if="showCommentsSection">
+	<div class="comments-section" v-if="showCommentsSection && !showDeleteConfirmation && errormsg == null">
 		<div v-for="comment in comments" :key="comment.id" class="comment">
 			<span>{{ comment.author }}: {{ comment.text }}</span>
 		</div>
@@ -107,6 +137,19 @@ export default {
 			<input type="text" class="form-control rounded" v-model="newCommentText" maxlength="250" placeholder="Leave a comment...">
 			<button class="btn btn-light" @click="postComment">
 				<i class="bi bi-send-fill"></i>
+			</button>
+		</div>
+	</div>
+	<div class="delete-confirmation" v-if="showDeleteConfirmation && errormsg == null">
+		<div class="confirmation-message">
+			Are you sure you want to delete this photo?
+		</div>
+		<div class="confirmation-buttons">
+			<button @click="deletePhoto" class="btn btn-danger">
+				<i class="bi bi-trash-fill"></i> Delete
+			</button>
+			<button @click="toggleDeleteConfirmation" class="btn btn-secondary">
+				<i class="bi bi-x-circle-fill"></i> Cancel
 			</button>
 		</div>
 	</div>
@@ -162,16 +205,40 @@ export default {
 
 .new-comment input {
 	flex-grow: 1;
-	margin-right: 0.5rem; /* Spazio tra il campo di input e il pulsante */
+	margin-right: 0.5rem;
 }
 
 .new-comment button {
-	background-color: #82868a; /* Colore grigio scuro per il bottone */
-	color: #ffffff; /* Colore del testo e dell'icona bianco */
-	border: none; /* Rimuove il bordo per un look più pulito */
+	background-color: #82868a;
+	color: #ffffff;
+	border: none;
 }
 
 .new-comment button:hover {
-	background-color: #94979c; /* Un grigio leggermente più chiaro per lo hover */
+	background-color: #94979c;
+}
+
+.confirmation-buttons .btn + .btn {
+	margin-left: 10px;
+}
+
+.delete-confirmation {
+	background-color: #dadce0;
+	padding: 25px 1rem 1rem;
+	border-radius: 0 0 0.5rem 0.5rem;
+	width: 100%;
+	max-width: 500px;
+	margin-top: -15px;
+}
+
+.confirmation-message {
+	display: flex;
+	margin-bottom: 1rem;
+	justify-content: center;
+}
+
+.confirmation-buttons {
+	display: flex;
+	justify-content: center;
 }
 </style>

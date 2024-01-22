@@ -125,6 +125,9 @@ export default {
 					this.$refs.banButton.blur();
 				}
 			});
+		},
+		handlePhotoDeleted() {
+			this.fetchUserData(this.userProfile.uuid);
 		}
 	},
 	watch: {
@@ -184,7 +187,7 @@ export default {
 		<div class="container" v-if="errormsg == null">
 			<div class="row justify-content-center">
 				<div class="d-flex flex-column align-items-center" v-for="photo in photos" :key="photo.uuid">
-					<PhotoCard :photo-u-u-i-d="photo"></PhotoCard><br>
+					<PhotoCard :photo-u-u-i-d="photo" @photo-deleted="handlePhotoDeleted"></PhotoCard><br>
 				</div>
 			</div>
 		</div>
