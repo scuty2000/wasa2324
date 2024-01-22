@@ -6,6 +6,10 @@ export default {
 	components: {ErrorMsg},
 	props: {
 		photoUUID: String,
+		showAuthor: {
+			type: Boolean,
+			default: false
+		}
 	},
 	data() {
 		return {
@@ -42,6 +46,15 @@ export default {
 					},
 				});
 				this.photoDetails = response.data;
+				if (!this.userInfos[this.photoDetails.author]) {
+					const userResponse = await this.$axios.get(`/users/${this.photoDetails.author}`, {
+						headers: {
+							'X-Requesting-User-UUID': localStorage.getItem('userId'),
+							'Authorization': localStorage.getItem('authToken')
+						}
+					});
+					this.userInfos[this.photoDetails.author] = userResponse.data.username;
+				}
 				this.showDeleteButton = this.photoDetails.author === localStorage.getItem('userId');
 			} catch (error) {
 				console.error("Error loading photo data:", error);
@@ -191,6 +204,12 @@ export default {
 
 <template>
 	<div class="photo-card card shadow-sm">
+		<div v-if="showAuthor && photoDetails.author" class="photo-author">
+			<router-link :to="`/user/${photoDetails.author}`" class="author-link">
+				<i class="bi bi-person-badge"></i>
+				{{ userInfos[photoDetails.author] || 'Unknown' }}
+			</router-link>
+		</div>
 		<img :src="`http://localhost:8080/uploads/${photoDetails.author}/${photoUUID}.${photoDetails.extension}`" alt="Photo" class="card-img-top" />
 
 		<div class="card-body">
@@ -402,4 +421,26 @@ export default {
 hr.my-2 {
 	border-top: 1px solid #e9ecef;
 }
+
+.photo-author {
+	background-color: #f8f9fa;
+	padding: 10px;
+	border-top-left-radius: 0.5rem;
+	border-top-right-radius: 0.5rem;
+	text-align: left;
+}
+
+.author-link {
+	color: #495057;
+	font-weight: bold;
+	display: flex;
+	align-items: center;
+	text-decoration: none;
+}
+
+.author-link i {
+	font-size: 1.2rem;
+	margin-right: 5px;
+}
+
 </style>

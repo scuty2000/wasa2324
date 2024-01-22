@@ -167,6 +167,11 @@ export default {
 			this.fetchUserData(newUserID);
 		}
 	},
+	unmounted() {
+		if (this.observer) {
+			this.observer.disconnect();
+		}
+	}
 }
 </script>
 
