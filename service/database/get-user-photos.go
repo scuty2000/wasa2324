@@ -22,6 +22,9 @@ func (db *appdbimpl) GetUserPhotos(uuid string, offsetMultiplier int) ([]string,
 	if err != nil {
 		return nil, 0, err
 	}
+	if rows.Err() != nil {
+		return nil, 0, rows.Err()
+	}
 	defer rows.Close()
 	for rows.Next() {
 		var follower string

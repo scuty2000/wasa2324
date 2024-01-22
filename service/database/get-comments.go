@@ -10,6 +10,9 @@ func (db *appdbimpl) GetPhotoComments(photoUUID string) ([]mocks.Comment, error)
 	if err != nil {
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 	defer rows.Close()
 
 	var results []mocks.Comment

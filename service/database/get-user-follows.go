@@ -6,6 +6,9 @@ func (db *appdbimpl) GetUserFollows(uuid string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 	defer rows.Close()
 	for rows.Next() {
 		var followed string
