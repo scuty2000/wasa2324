@@ -26,6 +26,7 @@ export default {
 			showDeleteConfirmation: false,
 		};
 	},
+	emits: ['photo-deleted'],
 	methods: {
 		async fetchPhotoDetails() {
 			try {
@@ -37,6 +38,7 @@ export default {
 				});
 				this.photoDetails = response.data;
 				this.showDeleteButton = this.photoDetails.author === localStorage.getItem('userId');
+				console.log(this.showDeleteButton);
 			} catch (error) {
 				console.error("Error loading photo data:", error);
 				this.errormsg = "Error loading photo data: " + error.toString();
@@ -111,19 +113,23 @@ export default {
 		<img :src="`http://localhost:8080/uploads/${photoDetails.author}/${photoUUID}.${photoDetails.extension}`" alt="Photo" class="card-img-top" />
 
 		<div class="card-body">
-			<div v-if="errormsg == null" class="likes-comments d-flex justify-content-between align-items-center">
-				<span @click="toggleLike" class="icon-btn">
-				  <i :class="['bi', photoDetails.liked ? 'bi-heart-fill' : 'bi-heart']"></i>
-				  {{ photoDetails.likesCount }}
+			<div v-if="errormsg == null" class="d-flex justify-content-between align-items-center">
+				<div class="left-icons d-flex align-items-center">
+					<span @click="toggleLike" class="icon-btn d-flex align-items-center">
+						<i :class="['bi', photoDetails.liked ? 'bi-heart-fill' : 'bi-heart']"></i>
+						<span class="counter">{{ photoDetails.likesCount }}</span>
+					</span>
+					<span @click="showComments" class="icon-btn d-flex align-items-center">
+						<i :class="['bi', showCommentsSection ? 'bi-chat-fill' : 'bi-chat']"></i>
+						<span class="counter">{{ photoDetails.commentsCount }}</span>
+					</span>
+				</div>
+				<span v-if="showDeleteButton && !showDeleteConfirmation" @click="toggleDeleteConfirmation" class="icon-btn" style="color: red;">
+					<i class="bi bi-trash-fill"></i>
 				</span>
-				<span @click="showComments" class="icon-btn">
-				  <i class="bi bi-chat"></i>
-				  {{ photoDetails.commentsCount }}
-				</span>
+			</div>
+			<div class="photo-info d-flex justify-content-end">
 				<span class="photo-date">{{ formatDate(photoDetails.date) }}</span>
-				<span v-if="!showDeleteConfirmation" @click="toggleDeleteConfirmation" class="icon-btn" style="color: red;">
-				  <i class="bi bi-trash-fill"></i>
-				</span>
 			</div>
 			<ErrorMsg v-if="errormsg != null" :msg="errormsg"></ErrorMsg>
 		</div>
@@ -164,18 +170,40 @@ export default {
 	background-color: #f8f9fa;
 }
 
-.icon-btn {
-	cursor: pointer;
-	display: inline-flex;
+.left-icons {
+	display: flex;
 	align-items: center;
 }
 
-.icon-btn i {
-	margin-right: 0.5rem;
+.icon-btn {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	margin-right: 20px;
+}
+
+.icon-btn:last-child {
+	margin-right: 0;
+}
+
+.counter {
+	margin-left: 5px;
+}
+
+.bi-chat, .bi-heart, .bi-heart-fill, .bi-trash-fill {
+	vertical-align: middle;
+}
+
+.counter {
+	margin-left: 5px;
+}
+
+.photo-info {
+	margin-top: 10px;
 }
 
 .photo-date {
-	font-size: 0.9rem;
+	font-size: 0.8rem;
 	color: #6c757d;
 }
 

@@ -42,6 +42,7 @@ export default {
 				});
 				this.userProfile = response.data;
 				try {
+					this.photos = [];
 					const response = await this.$axios.get('/photos', {
 						headers: {
 							'X-Requesting-User-UUID': requestingUserID,
@@ -127,6 +128,7 @@ export default {
 			});
 		},
 		handlePhotoDeleted() {
+			console.log("Photo deleted, reloading user data");
 			this.fetchUserData(this.userProfile.uuid);
 		}
 	},
