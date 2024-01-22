@@ -30,7 +30,10 @@ export default {
 <template>
 	<div class="login-container d-flex align-items-center justify-content-center">
 		<div class="login-form">
-			<h2 class="text-center mb-4">Accedi a WasaPhoto</h2>
+			<div class="d-flex align-items-center justify-content-center mb-4">
+				<img src="../assets/images/logo.png" alt="Wasaphoto Logo" height="60" class="d-inline-block align-text-top logo">
+			</div>
+			<h2 class="text-center mb-4">Login to your account</h2>
 			<div v-if="errormsg != null">
 				<ErrorMsg :msg="errormsg"></ErrorMsg>
 			</div>
@@ -74,7 +77,7 @@ export default {
 }
 
 .login-form h2 {
-	color: #333;
+	color: #3b3b3b;
 }
 
 .form-control {
@@ -94,5 +97,10 @@ export default {
 }
 .btn-block {
 	width: 100%;
+}
+
+.logo {
+	box-shadow: lightgray 0 0 10px;
+	border-radius: 10px;
 }
 </style>
