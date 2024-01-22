@@ -16,6 +16,9 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	if err != nil {
 		return nil, 0, err
 	}
+	if rows.Err() != nil {
+		return nil, 0, rows.Err()
+	}
 	defer rows.Close()
 	for rows.Next() {
 		var bannedUUID string
@@ -30,6 +33,9 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	rows, err = db.c.Query("SELECT FOLLOWED_UUID from Follows WHERE UUID = ?", requestingUUID)
 	if err != nil {
 		return nil, 0, err
+	}
+	if rows.Err() != nil {
+		return nil, 0, rows.Err()
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -59,6 +65,9 @@ func (db *appdbimpl) GetPaginatedPhotos(requestingUUID string, offsetMultiplier 
 	rows, err = db.c.Query(formattedQuery)
 	if err != nil {
 		return nil, 0, err
+	}
+	if rows.Err() != nil {
+		return nil, 0, rows.Err()
 	}
 	defer rows.Close()
 

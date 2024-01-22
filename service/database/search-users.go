@@ -13,6 +13,9 @@ func (db *appdbimpl) SearchUsers(searchQuery string) ([][]string, error) {
 		}
 		return nil, err
 	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 	defer rows.Close()
 
 	var results [][]string
