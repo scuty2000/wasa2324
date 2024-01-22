@@ -3,7 +3,8 @@ export default {
 	name: "LoginView",
 	data() {
 		return {
-			username: ''
+			username: '',
+			errormsg: null,
 		};
 	},
 	methods: {
@@ -14,11 +15,12 @@ export default {
 
 				localStorage.setItem('userId', identifier);
 				localStorage.setItem('authToken', token);
+				localStorage.setItem('username', this.username)
 
 				this.$router.push('/home');
 			} catch (error) {
-				console.error(error);
-				// Gestisci gli errori (es. mostrando un messaggio all'utente)
+				console.error("Error logging in:", error);
+				this.errormsg = `An error occurred while logging in. See console for details.`;
 			}
 		}
 	}
@@ -29,6 +31,9 @@ export default {
 	<div class="login-container d-flex align-items-center justify-content-center">
 		<div class="login-form">
 			<h2 class="text-center mb-4">Accedi a WasaPhoto</h2>
+			<div v-if="errormsg != null">
+				<ErrorMsg :msg="errormsg"></ErrorMsg>
+			</div>
 			<form @submit.prevent="handleLogin">
 				<div class="row">
 					<div class="col-12 mb-3">
