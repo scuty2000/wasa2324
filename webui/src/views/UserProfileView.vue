@@ -25,6 +25,7 @@ export default {
 			photoPaginationIndex: 0,
 			hasMorePhotos: true,
 			isUploadModalOpen: false,
+			showUsernameEdit: false,
 			editingUsername: false,
 			newUsername: '',
 		}
@@ -49,6 +50,8 @@ export default {
 				const requestingUserID = localStorage.getItem('userId');
 				const authToken = localStorage.getItem('authToken');
 				this.showActionButtons = requestingUserID !== userID;
+				this.showUsernameEdit = requestingUserID === userID;
+				console.log(this.showUsernameEdit)
 				const response = await instance.get(`/users/${userID}`, {
 					headers: {
 						'X-Requesting-User-UUID': requestingUserID,
@@ -56,7 +59,6 @@ export default {
 					}
 				});
 				this.userProfile = response.data;
-
 				this.photoPaginationIndex = 0;
 				this.hasMorePhotos = true;
 				this.photos = [];
@@ -216,7 +218,7 @@ export default {
 	<div class="user-profile container py-4" v-if="errormsg == null">
 		<div v-if="!editingUsername">
 			<h2 class="text-center mb-4">{{ userProfile.username }}
-				<i class="bi bi-pencil-square" @click="editUsername"></i>
+				<i v-if="showUsernameEdit" class="bi bi-pencil-square" @click="editUsername"></i>
 			</h2>
 		</div>
 		<div v-else class="username-edit-section">

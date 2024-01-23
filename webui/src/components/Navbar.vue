@@ -1,9 +1,11 @@
 <script>
 import {computed} from "vue";
 import {useRoute} from "vue-router";
+import SearchUsersModal from "../views/SearchUsersModal.vue";
 
 export default {
 	name: "Navbar",
+	components: {SearchUsersModal},
 	setup() {
 		const route = useRoute();
 		const isHome = computed(() => route.path === '/home');
@@ -13,7 +15,8 @@ export default {
 	},
 	data() {
 		return {
-			username: 'Utente'
+			username: 'Utente',
+			isSearchModalOpen: false
 		};
 	},
 	mounted() {
@@ -33,6 +36,12 @@ export default {
 		},
 		goProfile() {
 			this.$router.push(`/user/${localStorage.getItem('userId')}`);
+		},
+		openSearchModal() {
+			this.isSearchModalOpen = true;
+		},
+		closeSearchModal() {
+			this.isSearchModalOpen = false;
 		},
 		getUsername() {
 			return localStorage.getItem('username');
@@ -60,6 +69,12 @@ export default {
 			</div>
 
 			<ul class="navbar-nav ms-auto">
+				<li class="nav-item">
+					<button class="btn btn-outline-light" @click="openSearchModal">
+						<i class="bi bi-search"></i>
+					</button>
+				</li>
+				&nbsp;
 				<li class="nav-item dropdown card">
 					<div class="nav-link dropdown-toggle justify-content-center align-items-center d-flex" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: rgba(45, 90, 110, 0.8);">
 						<i class="bi bi-person-badge-fill"></i>
@@ -73,6 +88,7 @@ export default {
 			</ul>
 		</div>
 	</nav>
+	<SearchUsersModal v-if="isSearchModalOpen" @close="closeSearchModal" />
 </template>
 
 <style>
