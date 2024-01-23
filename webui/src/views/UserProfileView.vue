@@ -64,8 +64,24 @@ export default {
 				this.photos = [];
 				await this.loadMorePhotos();
 			} catch (error) {
-				this.errormsg = error.toString();
 				console.error("Error loading user data:", error);
+				if(error.response.status === 404) {
+					this.errormsg = "User not found.";
+					return;
+				} else if (error.response.status === 403) {
+					this.errormsg = "This user has banned you.";
+					return;
+				} else if (error.response.status === 401) {
+					this.errormsg = "You must be logged in to view this user.";
+					return;
+				} else if (error.response.status === 400) {
+					this.errormsg = "Invalid user ID.";
+					return;
+				} else if (error.response.status === 500) {
+					this.errormsg = "Internal server error.";
+					return;
+				}
+				this.errormsg = error.toString();
 			}
 		},
 		async toggleUserFollow() {
