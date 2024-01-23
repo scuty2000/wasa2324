@@ -210,7 +210,7 @@ export default {
 				{{ userInfos[photoDetails.author] || 'Unknown' }}
 			</router-link>
 		</div>
-		<img :src="`http://localhost:8080/uploads/${photoDetails.author}/${photoUUID}.${photoDetails.extension}`" alt="Photo" class="card-img-top" />
+		<img :src="`http://localhost:8000/uploads/${photoDetails.author}/${photoUUID}.${photoDetails.extension}`" alt="Photo" class="card-img-top" />
 
 		<div class="card-body">
 			<div v-if="errormsg == null" class="d-flex justify-content-between align-items-center">
