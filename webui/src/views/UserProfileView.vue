@@ -31,6 +31,7 @@ export default {
 			newUsername: '',
 			isFollowListModalOpen: false,
 			followListType: '',
+			loading: false,
 		}
 	},
 	mounted() {
@@ -157,6 +158,8 @@ export default {
 		async loadMorePhotos() {
 			if (!this.hasMorePhotos) return;
 			if (this.userProfile.uuid == null) return;
+			if (this.loading) return;
+			this.loading = true;
 
 			try {
 				const requestingUserID = localStorage.getItem('userId');
@@ -174,6 +177,7 @@ export default {
 				this.photos.push(...response.data["user-photos"]);
 				this.photoPaginationIndex++;
 				this.hasMorePhotos = response.data["paginationLimit"] >= this.photoPaginationIndex;
+				this.loading = false;
 			} catch (error) {
 				console.error("Error loading more photos:", error);
 			}
