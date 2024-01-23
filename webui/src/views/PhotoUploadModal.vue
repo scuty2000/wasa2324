@@ -14,6 +14,8 @@ export default {
 			this.$refs.fileInput.click();
 		},
 		onFileChange(event) {
+			this.uploading = false;
+			this.uploadComplete = false;
 			const file = event.target.files[0];
 			if (file && (file.type === "image/png" || file.type === "image/jpeg")) {
 				if (file.size <= 65 * 1024 * 1024) {
@@ -66,7 +68,7 @@ export default {
 				<div class="modal-header">
 					<button class="close-button" @click="closeModal"><i class="bi bi-x-lg"></i></button>
 				</div>
-
+				<h3> Upload Photo </h3>
 				<div class="image-drop-area" @drop.prevent="onDrop" @dragover.prevent @dragenter.prevent>
 					<input type="file" ref="fileInput" accept="image/png, image/jpeg" @change="onFileChange" hidden>
 					<div v-if="imagePreview">
@@ -75,7 +77,8 @@ export default {
 					<div v-else @click="triggerFileInput">Drag & drop here or click to select an image</div>
 				</div>
 
-				<button class="btn btn-success mt-3" :disabled="uploading || uploadComplete" @click="uploadImage">
+				<button class="btn btn-success mt-3" :disabled="uploading || uploadComplete" @click="uploadImage" :style=" !uploading && !uploadComplete ? 'background-color: black' : (uploading ? 'background-color: darkorange' : '\n'+
+'\tbackground-color: darkgreen;') ">
 					<span v-if="uploading">Uploading...</span>
 					<span v-else-if="uploadComplete">Upload Complete</span>
 					<span v-else>Upload Photo</span>
@@ -119,6 +122,7 @@ export default {
 	color: grey;
 	font-size: 25px;
 	cursor: pointer;
+	margin-top: 10px;
 }
 
 .image-drop-area {
@@ -143,7 +147,18 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: rgba(0, 0, 0, 0.5); /* Sfondo semi-trasparente */
-	z-index: 1050; /* Maggiore di qualsiasi altro elemento, incluso la navbar */
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 1050;
+}
+
+h3 {
+	text-align: center;
+	margin-bottom: 20px;
+	font-weight: bold;
+}
+
+.btn {
+	width: 100%;
+	border: transparent;
 }
 </style>

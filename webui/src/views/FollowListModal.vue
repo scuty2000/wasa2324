@@ -1,42 +1,38 @@
 <script>
-import ErrorMsg from "../components/ErrorMsg.vue";
-
 export default {
-	name: "SearchUsersModal",
-	components: {ErrorMsg},
+	name: "FollowListModal",
+	props: {
+		listType: String,
+		userID: String,
+		userName: String,
+	},
 	data() {
 		return {
-			searchQuery: '',
-			searchResults: [],
+			userList: [],
 			errormsg: null,
 		};
 	},
-	watch: {
-		searchQuery(newQuery) {
-			if (newQuery.length >= 3 && newQuery.length <= 16 && /^[a-zA-Z0-9_]*$/.test(newQuery)) {
-				this.performSearch();
-			} else if(newQuery.length !== 0) {
-				this.searchResults = [];
-				this.errormsg = "Input at least 3 characters and only letters, numbers, and underscores";
-			} else {
-				this.searchResults = [];
-			}
-		},
+	mounted() {
+		this.fetchUsers();
 	},
 	methods: {
-		async performSearch() {
+		async fetchUsers() {
+			if (!this.userID || (this.listType !== 'followers' && this.listType !== 'following')) return;
+
 			try {
-				const response = await this.$axios.get(`/users?searchQuery=${this.searchQuery}`, {
+				const endpoint = `/users/${this.userID}/${this.listType}`;
+				const response = await this.$axios.get(endpoint, {
 					headers: {
 						'Authorization': localStorage.getItem('authToken'),
 						'X-Requesting-User-UUID': localStorage.getItem('userId')
 					}
 				});
-				this.searchResults = response.data.users;
+				const responseName = this.listType === 'followers' ? 'followers' : 'followings';
+				this.userList = response.data[responseName];
 				this.errormsg = null;
 			} catch (error) {
-				console.error("Error searching users:", error);
-				this.errormsg = "Error searching users: " + error.toString();
+				console.error(`Error fetching ${this.listType}:`, error);
+				this.errormsg = `Error fetching ${this.listType}: ` + error.toString();
 			}
 		},
 		closeModal() {
@@ -53,17 +49,15 @@ export default {
 				<div class="modal-header">
 					<button class="close-button" @click="closeModal"><i class="bi bi-x-lg"></i></button>
 				</div>
-				<h3> Search Users </h3>
-				<input type="text" v-model="searchQuery" class="form-control" placeholder="Search query..." maxlength="16" />
-
+				<h3> {{ this.userName + "\'s " + this.listType }} </h3>
 				<div class="search-results mt-3">
-					<ErrorMsg v-if="errormsg" :msg="errormsg" />
+					<div v-if="errormsg">{{ errormsg }}</div>
 					<div v-else>
 						<ul style="padding-left: 0;">
-							<li v-for="user in searchResults" :key="user.uuid" class="search-result-card">
-								<router-link @click="closeModal" :to="`/user/${user.uuid}`" class="user-link">
+							<li v-for="user in userList" :key="user.uuid" class="search-result-card">
+								<router-link @click="this.$emit('close')" :to="`/user/${user.uuid}`" class="user-link">
 									<i class="bi bi-person-fill"></i>
-									<b>{{ user.username }}</b>
+									{{ user.username }}
 								</router-link>
 							</li>
 						</ul>
@@ -92,7 +86,7 @@ export default {
 	background: white;
 	padding: 0 20px 20px;
 	border-radius: 10px;
-	max-width: 400px;
+	max-width: 450px;
 	width: 100%;
 	position: relative;
 }
@@ -148,7 +142,6 @@ export default {
 
 h3 {
 	text-align: center;
-	margin-top: -10px;
 	margin-bottom: 20px;
 	font-weight: bold;
 }

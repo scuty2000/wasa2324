@@ -4,10 +4,11 @@ import {reactive} from "vue";
 import instance from "../services/axios";
 import PhotoCard from "../components/PhotoCard.vue";
 import PhotoUploadModal from "./PhotoUploadModal.vue";
+import FollowListModal from "./FollowListModal.vue";
 
 export default {
 	name: "UserProfileView",
-	components: { PhotoUploadModal, PhotoCard },
+	components: {FollowListModal, PhotoUploadModal, PhotoCard },
 	data: function() {
 		return {
 			errormsg: null,
@@ -28,6 +29,8 @@ export default {
 			showUsernameEdit: false,
 			editingUsername: false,
 			newUsername: '',
+			isFollowListModalOpen: false,
+			followListType: '',
 		}
 	},
 	mounted() {
@@ -51,7 +54,6 @@ export default {
 				const authToken = localStorage.getItem('authToken');
 				this.showActionButtons = requestingUserID !== userID;
 				this.showUsernameEdit = requestingUserID === userID;
-				console.log(this.showUsernameEdit)
 				const response = await instance.get(`/users/${userID}`, {
 					headers: {
 						'X-Requesting-User-UUID': requestingUserID,
@@ -150,7 +152,6 @@ export default {
 			});
 		},
 		handlePhotoDeleted() {
-			console.log("Photo deleted, reloading user data");
 			this.fetchUserData(this.userProfile.uuid);
 		},
 		async loadMorePhotos() {
@@ -212,6 +213,16 @@ export default {
 				this.errormsg = error.toString();
 			}
 		},
+		openFollowListModal(type) {
+			this.followListType = type;
+			if(type === 'followers' && this.userProfile.followersCount > 0)
+				this.isFollowListModalOpen = true;
+			else if(type === 'following' && this.userProfile.followingCount > 0)
+				this.isFollowListModalOpen = true;
+		},
+		closeFollowListModal() {
+			this.isFollowListModalOpen = false;
+		},
 	},
 	watch: {
 		'$route.params.userID'(newUserID) {
@@ -250,12 +261,12 @@ export default {
 						<div class="counter-number">{{ userProfile.photosCount }}</div>
 					</div>
 
-					<div class="col">
+					<div class="col clickable" @click="openFollowListModal('followers')">
 						<div class="counter-label">Followers</div>
 						<div class="counter-number">{{ userProfile.followersCount }}</div>
 					</div>
 
-					<div class="col">
+					<div class="col clickable" @click="openFollowListModal('following')">
 						<div class="counter-label">Following</div>
 						<div class="counter-number">{{ userProfile.followingCount }}</div>
 					</div>
@@ -290,6 +301,13 @@ export default {
 			<i class="bi bi-upload"></i> Upload a Photo
 		</button>
 		<PhotoUploadModal v-if="isUploadModalOpen" @close="closeUploadModal" />
+		<FollowListModal
+			v-if="isFollowListModalOpen"
+			:userID="userProfile.uuid"
+			:listType="followListType"
+			:user-name="userProfile.username"
+			@close="closeFollowListModal"
+		/>
 	</div>
 </template>
 
@@ -391,5 +409,13 @@ export default {
 .username-save-button:disabled {
 	background-color: #ccc;
 	cursor: not-allowed;
+}
+
+.col {
+	cursor: default;
+}
+
+.clickable {
+	cursor: pointer;
 }
 </style>
