@@ -1,0 +1,14 @@
+# Create the temporary build container
+FROM node:lts AS builder
+
+# Copy vue.js project files to the container
+WORKDIR /app/
+COPY ./webui .
+
+# Build the project
+RUN npm run build-prod
+
+# Create the production container
+FROM nginx:stable
+
+COPY --from=builder /app/dist /usr/share/nginx/html
