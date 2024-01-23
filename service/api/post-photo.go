@@ -143,7 +143,7 @@ func (rt *_router) postPhoto(w http.ResponseWriter, r *http.Request, ps httprout
 	responseMap["photoID"] = photoUUID
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Location", ":8080/uploads/"+requestingUUID+"/"+photoUUID+"."+extension)
+	w.Header().Set("Location", ":8000/uploads/"+requestingUUID+"/"+photoUUID+"."+extension)
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(responseMap)
 }
