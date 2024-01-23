@@ -151,8 +151,8 @@ func run() error {
 
 		http.Handle("/uploads/", http.StripPrefix("/uploads", fs))
 
-		logger.Infof("Static files listening on 0.0.0.0:8080")
-		err := http.ListenAndServe(":8080", nil)
+		logger.Infof("Static files listening on 0.0.0.0:8000")
+		err := http.ListenAndServe(":8000", nil)
 		if err != nil {
 			log.Fatal(err)
 		}
