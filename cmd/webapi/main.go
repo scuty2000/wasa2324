@@ -31,7 +31,6 @@ import (
 	"github.com/ardanlabs/conf"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sirupsen/logrus"
-	"log"
 	"lucascutigliani.it/wasa/WasaPhoto/service/api"
 	"lucascutigliani.it/wasa/WasaPhoto/service/database"
 	"lucascutigliani.it/wasa/WasaPhoto/service/globaltime"
@@ -144,18 +143,6 @@ func run() error {
 		logger.Infof("API listening on %s", apiserver.Addr)
 		serverErrors <- apiserver.ListenAndServe()
 		logger.Infof("stopping API server")
-	}()
-
-	go func() {
-		fs := http.FileServer(http.Dir("./uploads"))
-
-		http.Handle("/uploads/", http.StripPrefix("/uploads", fs))
-
-		logger.Infof("Static files listening on 0.0.0.0:8000")
-		err := http.ListenAndServe(":8000", nil)
-		if err != nil {
-			log.Fatal(err)
-		}
 	}()
 
 	// Waiting for shutdown signal or POSIX signals

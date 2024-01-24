@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
@@ -27,6 +28,13 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/photos/:photoID/comments/:commentID", rt.wrap(rt.deleteComment))
 	rt.router.GET("/photos/:photoID/comments", rt.wrap(rt.getComments))
 	rt.router.GET("/users/:userID/stream", rt.wrap(rt.getUserStream))
+
+	fileServer := http.FileServer(http.Dir("./uploads"))
+	serveFiles := http.StripPrefix("/uploads", fileServer).ServeHTTP
+
+	rt.router.GET("/uploads/*filepath", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		serveFiles(w, r)
+	})
 
 	// Special routes
 	rt.router.GET("/liveness", rt.liveness)
