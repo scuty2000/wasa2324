@@ -1,12 +1,11 @@
 <script>
-import {RouterLink, RouterView, useRoute} from 'vue-router'
+import {RouterView, useRoute} from 'vue-router'
 import Navbar from "./components/Navbar.vue";
 import {computed} from "vue";
 
 export default {
 	components: {
 		Navbar,
-		RouterLink,
 		RouterView,
 	},
 	setup() {

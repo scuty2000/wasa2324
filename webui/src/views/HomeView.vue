@@ -1,5 +1,4 @@
 <script>
-import Navbar from "../components/Navbar.vue";
 import PhotoCard from "../components/PhotoCard.vue";
 import ErrorMsg from "../components/ErrorMsg.vue";
 import instance from "../services/axios";
@@ -7,7 +6,7 @@ import PhotoUploadModal from "./PhotoUploadModal.vue";
 
 export default {
 	name: "HomeView",
-	components: { PhotoCard, ErrorMsg, Navbar, PhotoUploadModal },
+	components: { PhotoCard, ErrorMsg, PhotoUploadModal },
 	data() {
 		return {
 			photos: [],
@@ -17,10 +16,10 @@ export default {
 			isUploadModalOpen: false,
 		};
 	},
-	mounted() {
-		this.loadMorePhotos();
+	async mounted() {
+		await this.loadMorePhotos();
 
-		this.$nextTick(() => {
+		await this.$nextTick(() => {
 			if (this.$refs.loadMorePhotosTrigger) {
 				const options = {
 					root: null,
