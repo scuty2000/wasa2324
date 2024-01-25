@@ -219,9 +219,9 @@ export default {
 		},
 		openFollowListModal(type) {
 			this.followListType = type;
-			if(type === 'followers')
+			if(type === 'followers' && this.userProfile.followersCount > 0)
 				this.isFollowListModalOpen = true;
-			else if(type === 'following')
+			else if(type === 'following' && this.userProfile.followingCount > 0)
 				this.isFollowListModalOpen = true;
 		},
 		closeFollowListModal() {
