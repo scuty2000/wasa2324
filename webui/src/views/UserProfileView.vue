@@ -114,7 +114,7 @@ export default {
 				}
 			}
 			await this.fetchUserData(this.userProfile.uuid);
-			await this.$nextTick(() => {
+			this.$nextTick(() => {
 				if (this.$refs.followButton) {
 					this.$refs.followButton.blur();
 				}
@@ -146,7 +146,7 @@ export default {
 				}
 			}
 			await this.fetchUserData(this.userProfile.uuid);
-			await this.$nextTick(() => {
+			this.$nextTick(() => {
 				if (this.$refs.banButton) {
 					this.$refs.banButton.blur();
 				}

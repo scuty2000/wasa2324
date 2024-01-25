@@ -19,7 +19,7 @@ export default {
 	async mounted() {
 		await this.loadMorePhotos();
 
-		await this.$nextTick(() => {
+		this.$nextTick(() => {
 			if (this.$refs.loadMorePhotosTrigger) {
 				const options = {
 					root: null,
